@@ -990,7 +990,7 @@ function enterAdmin(){
   role='admin'; document.body.classList.add('admin');
   $('loginScreen').classList.add('hidden'); $('startScreen').classList.add('hidden');
   const pc=parseCode(store.get('partel-admin-mang'));
-  pc ? newGame(pc.diff, pc.seed) : newGame('keskmine');
+  (pc && pc.seed>=1000 && pc.seed<=9999) ? newGame(pc.diff, pc.seed) : newGame(pc ? pc.diff : 'keskmine');
 }
 function login(){
   if(cyrb53($('pwIn').value,7).toString(36)!==ADMIN_PW_HASH){ $('loginErr').textContent='Vale parool.'; return; }
