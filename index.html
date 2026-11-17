@@ -83,6 +83,7 @@
   .box p{margin:6px 0}
   .box .big{font-size:40px;font-weight:800;margin:6px 0}
   .box .code{display:inline-block;background:#e4edf7;border-radius:6px;padding:2px 8px;font-weight:800}
+  .board-me td{background:#e3f4e8;font-weight:800}
   .box .row{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}
   .box button{background:#21405f;color:#fff;border-color:#21405f}
   .box button.primary{background:var(--red);border-color:var(--red)}
@@ -165,7 +166,7 @@
     <label for="nameIn">Sinu nimi</label>
     <input id="nameIn" maxlength="40" autocomplete="name">
     <label for="codeIn">Mängu kood (saad selle adminilt)</label>
-    <input id="codeIn" placeholder="nt keskmine-48213" autocomplete="off">
+    <input id="codeIn" placeholder="nt 24813" autocomplete="off" inputmode="numeric" maxlength="20">
     <div class="err" id="startErr"></div>
     <button class="primary wide" id="startBtn">Alusta mängu</button>
     <button class="linkbtn" id="toLogin">Admini sisselogimine</button>
@@ -192,6 +193,10 @@
     <div class="big" id="mTime">0:00</div>
     <p id="mDetail"></p>
     <div class="player-only" style="display:block">
+      <p id="mSendStatus" style="font-weight:700"></p>
+      <div id="mBoard"></div>
+    </div>
+    <div class="player-only" id="mManual" style="display:block">
       <label for="mResult">Sinu tulemuse kood: saada see adminile (nt Teamsis)</label>
       <input id="mResult" class="rescode" readonly>
       <div class="row"><button class="primary" id="mCopy">Kopeeri kood</button></div>
@@ -207,6 +212,12 @@
 <div id="resultsModal" class="screen hidden" style="background:rgba(5,14,26,.75)">
   <div class="box">
     <h2 style="text-align:center">Tulemused</h2>
+    <div id="liveWrap" class="hidden">
+      <p style="margin-bottom:0"><b>Edetabel reaalajas</b> · pilt <span class="code" id="liveCode"></span> · uueneb iga 10 s <button id="liveRefresh" style="padding:2px 8px;font-size:12px;margin-left:6px">Värskenda</button></p>
+      <div id="liveBoard"></div>
+      <hr style="border:none;border-top:1px solid #d6e1ec;margin:16px 0 8px">
+      <p style="font-size:13px;color:#5a7491;margin:0">Kui mõne mängija automaatne saatmine ebaõnnestus, saad tema tulemuse koodi lisada käsitsi allpool.</p>
+    </div>
     <p>Kleebi siia mängijate saadetud tulemuse koodid (võib mitu korraga, nt terve Teamsi vestluse):</p>
     <textarea id="resIn" placeholder="PARTEL.…"></textarea>
     <div class="row" style="justify-content:flex-start">
@@ -728,9 +739,18 @@ const store = {
   del(k,ss){ try{ (ss?sessionStorage:localStorage).removeItem(k); }catch(e){} }
 };
 let role = null, playerName = '';
+const LV=['kerge','keskmine','raske'];
+// Mängijale näidatav kood: 1. number = tase (1 kerge, 2 keskmine, 3 raske), järgmised 4 = pilt. Nt 24813.
 function parseCode(code){
-  const m=String(code||'').trim().toLowerCase().match(/^(kerge|keskmine|raske)-(\d{1,9})$/);
+  const t=String(code||'').toLowerCase().replace(/\s+/g,'');
+  let m=t.match(/^([123])(\d{4})$/);
+  if(m){ const d=LV[+m[1]-1]; return { diff:d, seed:+m[2], code:`${d}-${+m[2]}` }; }
+  m=t.match(/^(kerge|keskmine|raske)-(\d{1,9})$/);
   return m ? { diff:m[1], seed:+m[2], code:`${m[1]}-${+m[2]}` } : null;
+}
+function shortCode(code){
+  const m=String(code).match(/^(kerge|keskmine|raske)-(\d+)$/); if(!m) return code;
+  const n=+m[2]; return (n>=1000&&n<=9999) ? (LV.indexOf(m[1])+1)+String(n) : code;
 }
 function makeResult(){
   const payload = JSON.stringify([playerName, st.code, Math.round(elapsed()), st.misses, st.hints]);
@@ -743,9 +763,38 @@ function readResult(txt){
   }catch(e){ return null; }
 }
 
+// ---------- Google Sheets ----------
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxTPgS8nIBSUWHQ1xYa4w5ad_dCJU2t35VjmxGfugFzWas1xaIvBWfMjn52pqjqBKAwbA/exec';   // ← kleebi siia Google Apps Scripti veebirakenduse URL (https://script.google.com/macros/s/.../exec)
+async function apiPost(data){
+  const r = await fetch(SHEET_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(data) });
+  return r.json();
+}
+async function apiBoard(code){
+  const r = await fetch(SHEET_URL + '?code=' + encodeURIComponent(code) + '&t=' + Date.now());
+  return r.json();
+}
+function boardHtml(rows, me, limit){
+  if(!rows || !rows.length) return '<p>Selle pildi tulemusi veel pole.</p>';
+  const idx = me ? rows.findIndex(r=>r.name.toLowerCase()===me.toLowerCase()) : -1;
+  let h='<table><thead><tr><th>Koht</th><th>Nimi</th><th>Aeg</th><th>Mööda</th><th>Vihjed</th></tr></thead><tbody>';
+  const row=(r,i)=>`<tr class="${i===idx?'board-me':(i===0?'first':'')}"><td>${i+1}.</td><td>${esc(r.name)}</td><td class="num">${fmt(r.ms)}</td><td class="num">${r.misses}</td><td class="num">${r.hints}</td></tr>`;
+  rows.slice(0,limit).forEach((r,i)=>h+=row(r,i));
+  if(idx>=limit){ h+='<tr><td colspan="5" style="text-align:center">…</td></tr>'+row(rows[idx],idx); }
+  h+='</tbody></table>';
+  if(rows.length>limit) h+=`<p style="font-size:12px;color:#5a7491">Kokku ${rows.length} mängijat.</p>`;
+  return h;
+}
+let boardTimer=null;
+function stopBoard(){ if(boardTimer){ clearInterval(boardTimer); boardTimer=null; } }
+function pollBoard(code, el, me, limit){
+  stopBoard();
+  const load=()=>apiBoard(code).then(d=>{ if(d&&d.ok) el.innerHTML=boardHtml(d.rows, me, limit); }).catch(()=>{});
+  load(); boardTimer=setInterval(load,10000);
+}
+
 function newGame(diffKey, seed){
   diffKey = DIFF[diffKey] ? diffKey : 'keskmine';
-  seed = seed || (10000+Math.floor(Math.random()*89999));
+  seed = seed || (1000+Math.floor(Math.random()*9000));
   $('diff').value=diffKey;
   const g=generate(diffKey, seed);
   st={ diff:diffKey, seed, code:`${diffKey}-${seed}`, ...g, start:performance.now(), penalty:0, misses:0, hints:0,
@@ -754,7 +803,7 @@ function newGame(diffKey, seed){
   sc.setTransform(RES,0,0,RES,0,0); sc.clearRect(0,0,W,H);
   drawBackground(sc, st.bg); st.objs.forEach(o=>drawObj(sc,o));
   buildCards();
-  $('codeOut').textContent=st.code; $('misses').textContent='0'; $('solBtn').textContent='Näita lahendust';
+  $('codeOut').textContent=shortCode(st.code); $('misses').textContent='0'; $('solBtn').textContent='Näita lahendust';
   if(role==='admin') store.set('partel-admin-mang', st.code);
   $('modal').classList.remove('show');
   applyZoom(1);
@@ -785,7 +834,27 @@ function showWin(ms, misses, hints, resultCode, again){
   $('mTime').textContent=fmt(ms);
   $('mDetail').textContent=`Möödalaske: ${misses} · vihjeid: ${hints}`;
   $('mResult').value=resultCode||''; $('mCopied').textContent='';
+  $('mSendStatus').textContent=''; $('mBoard').innerHTML='';
   $('modal').classList.add('show');
+  if(role!=='player') return;
+  if(!SHEET_URL){ $('mManual').classList.remove('hidden'); return; }
+  $('mManual').classList.add('hidden');
+  $('mSendStatus').textContent='Saadan tulemust…'; $('mSendStatus').style.color='#30475f';
+  const p=readResult(resultCode);
+  const sig=resultCode.split('.').pop();
+  apiPost({ name:p.name, code:p.code, ms:p.ms, misses:p.misses, hints:p.hints, sig })
+    .then(d=>{
+      if(!d||!d.ok) throw new Error(d&&d.status);
+      $('mSendStatus').textContent = d.status==='exists' ? 'Sinu tulemus on edetabelis ✓' : 'Tulemus saadetud ✓';
+      $('mSendStatus').style.color='#1f7a34';
+      $('mBoard').innerHTML=boardHtml(d.rows, p.name, 10);
+      pollBoard(p.code, $('mBoard'), p.name, 10);
+    })
+    .catch(()=>{
+      $('mSendStatus').textContent='Automaatne saatmine ebaõnnestus. Saada tulemuse kood adminile käsitsi.';
+      $('mSendStatus').style.color='#d62828';
+      $('mManual').classList.remove('hidden');
+    });
 }
 function finish(){
   st.done=true; st.endTime=performance.now();
@@ -884,7 +953,7 @@ $('hintBtn').onclick=hint;
 $('newBtn').onclick=()=>newGame($('diff').value);
 $('diff').onchange=()=>newGame($('diff').value);
 $('solBtn').onclick=()=>{ if(!st) return; st.showSol=!st.showSol; $('solBtn').textContent=st.showSol?'Peida lahendus':'Näita lahendust'; };
-$('copyCode').onclick=()=>copyText(st.code, $('copyCode'));
+$('copyCode').onclick=()=>copyText(shortCode(st.code), $('copyCode'));
 function copyText(txt, btn){
   const done=()=>{ if(btn){const o=btn.textContent; btn.textContent='Kopeeritud ✓'; setTimeout(()=>btn.textContent=o,1500);} };
   try{ navigator.clipboard.writeText(txt).then(done, ()=>fallbackCopy(txt,done)); }catch(e){ fallbackCopy(txt,done); }
@@ -899,7 +968,7 @@ $('nameIn').value = store.get('partel-nimi') || '';
 function startPlayer(){
   const name=$('nameIn').value.trim(), pc=parseCode($('codeIn').value);
   if(!name){ $('startErr').textContent='Sisesta oma nimi.'; return; }
-  if(!pc){ $('startErr').textContent='Mängu kood ei sobi. Küsi õiget koodi adminilt.'; return; }
+  if(!pc){ $('startErr').textContent='Kood peab olema 5-kohaline number (nt 24813). Küsi õiget koodi adminilt.'; return; }
   $('startErr').textContent=''; store.set('partel-nimi', name);
   role='player'; playerName=name; document.body.classList.remove('admin');
   $('playerName').textContent=name;
@@ -931,7 +1000,7 @@ $('loginBtn').onclick=login;
 $('pwIn').addEventListener('keydown',e=>{ if(e.key==='Enter') login(); });
 $('logoutBtn').onclick=()=>{ store.del('partel-admin',true); role=null; document.body.classList.remove('admin');
   $('resultsModal').classList.add('hidden'); $('modal').classList.remove('show'); $('startScreen').classList.remove('hidden'); };
-$('mClose').onclick=()=>$('modal').classList.remove('show');
+$('mClose').onclick=()=>{ $('modal').classList.remove('show'); stopBoard(); };
 
 // results
 function loadResults(){ try{ return JSON.parse(store.get('partel-admin-tulemused')||'[]'); }catch(e){ return []; } }
@@ -945,16 +1014,21 @@ function rankRows(){
 }
 function renderResults(){
   const {ok,rest,cur}=rankRows();
-  if(!ok.length && !rest.length){ $('resTable').innerHTML='<p>Tulemusi veel pole.</p>'; return; }
+  if(!ok.length && !rest.length){ $('resTable').innerHTML=SHEET_URL?'':'<p>Tulemusi veel pole.</p>'; return; }
   let h='<table><thead><tr><th>Koht</th><th>Nimi</th><th>Aeg</th><th>Mööda</th><th>Vihjed</th><th>Pilt</th><th>Staatus</th></tr></thead><tbody>';
-  ok.forEach((r,i)=>{ h+=`<tr class="${i===0?'first':''}"><td>${i+1}.</td><td>${esc(r.name)}</td><td class="num">${fmt(r.ms)}</td><td class="num">${r.misses}</td><td class="num">${r.hints}</td><td>${esc(r.code)}</td><td class="ok">kehtiv</td></tr>`; });
+  ok.forEach((r,i)=>{ h+=`<tr class="${i===0?'first':''}"><td>${i+1}.</td><td>${esc(r.name)}</td><td class="num">${fmt(r.ms)}</td><td class="num">${r.misses}</td><td class="num">${r.hints}</td><td>${esc(shortCode(r.code))}</td><td class="ok">kehtiv</td></tr>`; });
   rest.forEach(r=>{ const s=!r.valid?'<span class="bad">võltsitud kood</span>':'<span class="other">teine pilt</span>';
-    h+=`<tr><td>–</td><td>${esc(r.name)}</td><td class="num">${fmt(r.ms)}</td><td class="num">${r.misses}</td><td class="num">${r.hints}</td><td>${esc(r.code)}</td><td>${s}</td></tr>`; });
-  h+='</tbody></table>'; if(cur) h+=`<p style="font-size:12px;color:#5a7491">Paremusjärjestuses on praeguse pildi (${esc(cur)}) kehtivad tulemused.</p>`;
+    h+=`<tr><td>–</td><td>${esc(r.name)}</td><td class="num">${fmt(r.ms)}</td><td class="num">${r.misses}</td><td class="num">${r.hints}</td><td>${esc(shortCode(r.code))}</td><td>${s}</td></tr>`; });
+  h+='</tbody></table>'; if(cur) h+=`<p style="font-size:12px;color:#5a7491">Paremusjärjestuses on praeguse pildi (${esc(shortCode(cur))}) kehtivad tulemused.</p>`;
   $('resTable').innerHTML=h;
 }
-$('resBtn').onclick=()=>{ renderResults(); $('resMsg').textContent=''; $('resultsModal').classList.remove('hidden'); };
-$('resClose').onclick=()=>$('resultsModal').classList.add('hidden');
+$('resBtn').onclick=()=>{
+  renderResults(); $('resMsg').textContent=''; $('resultsModal').classList.remove('hidden');
+  $('liveWrap').classList.toggle('hidden', !SHEET_URL);
+  if(SHEET_URL){ $('liveCode').textContent=shortCode(st.code); $('liveBoard').innerHTML='<p>Laen…</p>'; pollBoard(st.code, $('liveBoard'), null, 50); }
+};
+$('liveRefresh').onclick=()=>{ if(SHEET_URL) pollBoard(st.code, $('liveBoard'), null, 50); };
+$('resClose').onclick=()=>{ $('resultsModal').classList.add('hidden'); stopBoard(); };
 $('resAdd').onclick=()=>{
   const found=($('resIn').value.match(/PARTEL\.[A-Za-z0-9+/]+\.[a-z0-9]+/g)||[]).map(readResult).filter(Boolean);
   const list=loadResults(); let added=0, upd=0;
@@ -980,7 +1054,7 @@ $('resClear').onclick=()=>{
 function start(){
   applyZoom(1); requestAnimationFrame(loop);
   if(store.get('partel-admin',true)==='1') enterAdmin();
-  else { const h=parseCode(location.hash.slice(1)); if(h) $('codeIn').value=h.code; (store.get('partel-nimi')?$('codeIn'):$('nameIn')).focus(); }
+  else { const h=parseCode(location.hash.slice(1)); if(h) $('codeIn').value=shortCode(h.code); (store.get('partel-nimi')?$('codeIn'):$('nameIn')).focus(); }
 }
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(start); else start();
 })();
