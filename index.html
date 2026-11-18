@@ -1,1063 +1,133 @@
 <!DOCTYPE html>
 <html lang="et">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kus on päkapikk Pärtel?</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --night:#0f2238; --night2:#17324f; --red:#d62828; --green:#1f9d3a; --gold:#f4c430;
-    --snow:#f4f8fc; --ink:#e8eef6; --muted:#9fb3c8;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;height:100%}
-  body{
-    font-family:Nunito,system-ui,sans-serif;color:var(--ink);background:var(--night);
-    display:flex;flex-direction:column;height:100vh;overflow:hidden;
-  }
-  header{
-    display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;
-    padding:10px 16px;background:linear-gradient(180deg,var(--night2),var(--night));
-    border-bottom:3px solid var(--red);
-  }
-  h1{
-    font-family:'Mountains of Christmas',cursive;font-size:30px;margin:0;line-height:1;
-    color:var(--snow);white-space:nowrap;
-  }
-  h1 span{color:var(--gold)}
-  .targets{display:flex;gap:8px}
-  .card{
-    position:relative;display:flex;flex-direction:column;align-items:center;
-    background:#21405f;border:2px solid #2f5579;border-radius:10px;padding:4px 6px 3px;width:96px;
-    transition:border-color .2s, background .2s;
-  }
-  .card canvas{width:72px;height:72px;display:block}
-  .targets{flex-wrap:wrap}
-  .targets.many .card{width:80px;padding:3px 4px 2px}
-  .targets.many .card canvas{width:54px;height:54px}
-  .targets.many .card small{font-size:10px}
-  .card small{font-size:11px;font-weight:700;text-align:center;line-height:1.15;color:var(--ink)}
-  .card.found{border-color:var(--green);background:#1d4a35}
-  .card.found::after{
-    content:"✓";position:absolute;top:2px;right:6px;font-weight:800;color:#7CFC9A;font-size:18px;
-  }
-  .stats{display:flex;gap:14px;align-items:center;font-weight:700}
-  .stat{display:flex;flex-direction:column;align-items:center;min-width:56px}
-  .stat b{font-size:22px;font-variant-numeric:tabular-nums;color:var(--snow)}
-  .stat i{font-style:normal;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-  .controls{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-left:auto}
-  button,select,input{
-    font:inherit;font-weight:700;font-size:14px;border-radius:8px;border:2px solid #2f5579;
-    background:#21405f;color:var(--ink);padding:6px 10px;
-  }
-  button{cursor:pointer}
-  button:hover{border-color:var(--gold)}
-  button.primary{background:var(--red);border-color:var(--red);color:#fff}
-  button.primary:hover{border-color:#fff}
-  input{width:130px}
-  .zoom button{width:34px;padding:6px 0}
-  #viewport{
-    flex:1;min-height:240px;overflow:auto;position:relative;background:#0a1828;
-  }
-  #stage{position:relative;margin:0 auto;cursor:crosshair}
-  #stage.dragging{cursor:grabbing}
-  #stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-  footer{
-    padding:5px 16px;font-size:12px;color:var(--muted);background:var(--night);
-    display:flex;flex-wrap:wrap;gap:4px 16px;
-  }
-  footer b{color:var(--ink)}
-  #modal{
-    position:fixed;inset:0;background:rgba(5,14,26,.72);display:none;
-    align-items:center;justify-content:center;z-index:10;padding:16px;
-  }
-  #modal.show{display:flex}
-  .box{
-    background:var(--snow);color:#14273d;border-radius:16px;padding:22px 26px;max-width:420px;width:100%;
-    text-align:center;border-top:8px solid var(--red);box-shadow:0 20px 60px rgba(0,0,0,.4);
-  }
-  .box h2{font-family:'Mountains of Christmas',cursive;font-size:36px;margin:0 0 6px;color:var(--red)}
-  .box p{margin:6px 0}
-  .box .big{font-size:40px;font-weight:800;margin:6px 0}
-  .box .code{display:inline-block;background:#e4edf7;border-radius:6px;padding:2px 8px;font-weight:800}
-  .board-me td{background:#e3f4e8;font-weight:800}
-  .box .row{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}
-  .box button{background:#21405f;color:#fff;border-color:#21405f}
-  .box button.primary{background:var(--red);border-color:var(--red)}
-  .admin-only{display:none !important}
-  body.admin .admin-only{display:inline-flex !important}
-  body.admin .player-only{display:none !important}
-  .hidden{display:none !important}
-  .screen{
-    position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:16px;
-    background:radial-gradient(ellipse at top,#23446b,#0a1828 70%);
-  }
-  .screen .box{max-width:400px}
-  .box label{display:block;text-align:left;font-weight:800;font-size:13px;margin:12px 0 4px;color:#30475f}
-  .box input,.box select{width:100%;background:#fff;color:#14273d;border-color:#c9d6e4;font-size:16px;padding:9px 12px}
-  .box input:focus{outline:none;border-color:var(--red)}
-  .box .err{color:var(--red);font-weight:700;min-height:20px;margin:8px 0 0;font-size:14px}
-  .box .wide{width:100%;margin-top:14px;padding:10px;font-size:16px}
-  .box .linkbtn{background:none;border:none;color:#5a7491;text-decoration:underline;font-weight:600;font-size:13px;margin-top:14px;cursor:pointer;padding:0}
-  .box .linkbtn:hover{color:var(--red)}
-  .rescode{width:100%;font-family:ui-monospace,Consolas,monospace;font-size:13px !important;background:#e4edf7 !important}
-  .gamecode{font-size:15px;font-weight:800;color:var(--gold);letter-spacing:.03em}
-  #resultsModal .box{max-width:760px;text-align:left;max-height:90vh;overflow:auto}
-  #resultsModal textarea{width:100%;min-height:80px;font-family:ui-monospace,Consolas,monospace;font-size:12px;border:2px solid #c9d6e4;border-radius:8px;padding:8px}
-  table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}
-  th,td{padding:6px 8px;border-bottom:1px solid #d6e1ec;text-align:left}
-  th{font-size:12px;text-transform:uppercase;color:#5a7491}
-  td.num{font-variant-numeric:tabular-nums}
-  tr.first td{background:#fff6d6;font-weight:800}
-  .ok{color:#1f7a34;font-weight:700}.bad{color:var(--red);font-weight:700}.other{color:#8a6d00;font-weight:700}
-  @media (max-width:700px){
-    h1{font-size:24px}
-    .card{width:80px}.card canvas{width:56px;height:56px}
-    .stat b{font-size:18px}
-  }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Kus on päkapikk Pärtel?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/main.js"></script>
 </head>
 <body>
-<header>
-  <h1>Kus on <span>päkapikk Pärtel?</span></h1>
-  <div class="targets" id="targets"></div>
-  <div class="stats">
-    <div class="stat"><b id="time">0:00</b><i>aeg</i></div>
-    <div class="stat"><b id="misses">0</b><i>mööda</i></div>
-  </div>
-  <div class="controls">
-    <span class="admin-only" style="gap:6px;align-items:center;flex-wrap:wrap">
-      <select id="diff" aria-label="Raskusaste">
-        <option value="kerge">Kerge</option>
-        <option value="keskmine" selected>Keskmine</option>
-        <option value="raske">Raske</option>
-      </select>
-      <button class="primary" id="newBtn">Uus pilt</button>
-      <button id="solBtn">Näita lahendust</button>
-      <button id="resBtn">Tulemused</button>
+
+  <header class="top-bar">
+    <h1 class="title">Kus on <span>päkapikk Pärtel?</span></h1>
+    <div class="targets" id="targetCards"></div>
+    <div class="stats">
+      <div class="stat"><b id="timeValue">0:00</b><i>aeg</i></div>
+      <div class="stat"><b id="missValue">0</b><i>mööda</i></div>
+    </div>
+    <div class="controls">
+      <span class="admin-only control-group">
+        <select id="levelSelect" aria-label="Raskusaste">
+          <option value="kerge">Kerge</option>
+          <option value="keskmine" selected>Keskmine</option>
+          <option value="raske">Raske</option>
+        </select>
+        <button class="btn-primary" id="newPictureButton">Uus pilt</button>
+        <button id="solutionButton">Näita lahendust</button>
+        <button id="resultsButton">Tulemused</button>
+      </span>
+      <button id="hintButton" title="Näitab ala, kus üks otsitav peidus on (+15 s)">Vihje</button>
+      <button class="zoom-button" id="zoomOutButton" aria-label="Vähenda">−</button>
+      <button class="zoom-button" id="zoomInButton" aria-label="Suurenda">+</button>
+      <button class="admin-only" id="logoutButton">Logi välja</button>
+    </div>
+  </header>
+
+  <main class="viewport" id="viewport">
+    <div class="stage" id="stage">
+      <canvas id="sceneCanvas"></canvas>
+      <canvas id="overlayCanvas"></canvas>
+    </div>
+  </main>
+
+  <footer class="bottom-bar">
+    <span class="admin-only">
+      Mängu kood mängijatele:&nbsp;<span class="game-code" id="gameCodeValue">—</span>&nbsp;
+      <button class="btn-small" id="copyGameCodeButton">Kopeeri</button>
     </span>
-    <button id="hintBtn" title="Näitab ala, kus üks otsitav peidus on (+15 s)">Vihje</button>
-    <span class="zoom"><button id="zOut" aria-label="Vähenda">−</button> <button id="zIn" aria-label="Suurenda">+</button></span>
-    <button class="admin-only" id="logoutBtn">Logi välja</button>
-  </div>
-</header>
+    <span class="player-only">Mängija: <b id="playerNameValue">—</b></span>
+    <span class="desktop-help">Vale klõps +3 s · Vihje +15 s · Suurenda nuppudega või Ctrl + hiirerattaga, lohista pildi liigutamiseks</span>
+    <span class="touch-help">Vale puudutus +3 s · Vihje +15 s · Suurenda kahe sõrmega või nuppudega</span>
+  </footer>
 
-<div id="viewport">
-  <div id="stage">
-    <canvas id="scene"></canvas>
-    <canvas id="overlay"></canvas>
-  </div>
-</div>
-
-<footer>
-  <span class="admin-only">Mängu kood mängijatele: <span class="gamecode" id="codeOut">—</span>&nbsp;<button id="copyCode" style="padding:1px 8px;font-size:12px">Kopeeri</button></span>
-  <span class="player-only">Mängija: <b id="playerName">—</b></span>
-  <span>Vale klõps +3 s · Vihje +15 s · Suurenda nuppudega või Ctrl + hiirerattaga, lohista pildi liigutamiseks</span>
-</footer>
-
-<!-- Player start -->
-<div class="screen" id="startScreen">
-  <div class="box">
-    <h2>Kus on päkapikk Pärtel?</h2>
-    <p>Leia pildilt üles kõik otsitavad, mida näed mängu ülaribal. Mida raskem tase, seda rohkem otsitavaid ja segajaid. Kiireim võidab!</p>
-    <label for="nameIn">Sinu nimi</label>
-    <input id="nameIn" maxlength="40" autocomplete="name">
-    <label for="codeIn">Mängu kood (saad selle adminilt)</label>
-    <input id="codeIn" placeholder="nt 24813" autocomplete="off" inputmode="numeric" maxlength="20">
-    <div class="err" id="startErr"></div>
-    <button class="primary wide" id="startBtn">Alusta mängu</button>
-    <button class="linkbtn" id="toLogin">Admini sisselogimine</button>
-  </div>
-</div>
-
-<!-- Admin login -->
-<div class="screen hidden" id="loginScreen">
-  <div class="box">
-    <h2>Admin</h2>
-    <label for="pwIn">Parool</label>
-    <input id="pwIn" type="password" autocomplete="current-password">
-    <div class="err" id="loginErr"></div>
-    <button class="primary wide" id="loginBtn">Logi sisse</button>
-    <button class="linkbtn" id="toStart">Tagasi mängija vaatesse</button>
-  </div>
-</div>
-
-<!-- Win -->
-<div id="modal">
-  <div class="box">
-    <h2>Häid jõule!</h2>
-    <p id="mIntro">Leidsid kõik üles ajaga</p>
-    <div class="big" id="mTime">0:00</div>
-    <p id="mDetail"></p>
-    <div class="player-only" style="display:block">
-      <p id="mSendStatus" style="font-weight:700"></p>
-      <div id="mBoard"></div>
+  <!-- Player start screen -->
+  <section class="screen" id="startScreen">
+    <div class="box">
+      <h2>Kus on päkapikk Pärtel?</h2>
+      <p>Leia pildilt üles kõik otsitavad, mida näed mängu ülaribal. Mida raskem tase, seda rohkem otsitavaid ja segajaid. Kiireim võidab!</p>
+      <label for="nameInput">Sinu nimi</label>
+      <input id="nameInput" maxlength="40" autocomplete="name">
+      <label for="codeInput">Mängu kood (saad selle adminilt)</label>
+      <input id="codeInput" placeholder="nt 24813" autocomplete="off" inputmode="numeric" maxlength="20">
+      <p class="message message--error" id="startError"></p>
+      <button class="btn-primary btn-block" id="startButton">Alusta mängu</button>
+      <button class="btn-link" id="showLoginButton">Admini sisselogimine</button>
     </div>
-    <div class="player-only" id="mManual" style="display:block">
-      <label for="mResult">Sinu tulemuse kood: saada see adminile (nt Teamsis)</label>
-      <input id="mResult" class="rescode" readonly>
-      <div class="row"><button class="primary" id="mCopy">Kopeeri kood</button></div>
-      <p class="err" id="mCopied" style="color:#1f7a34"></p>
+  </section>
+
+  <!-- Admin login screen -->
+  <section class="screen hidden" id="loginScreen">
+    <div class="box">
+      <h2>Admin</h2>
+      <label for="passwordInput">Parool</label>
+      <input id="passwordInput" type="password" autocomplete="current-password">
+      <p class="message message--error" id="loginError"></p>
+      <button class="btn-primary btn-block" id="loginButton">Logi sisse</button>
+      <button class="btn-link" id="showStartButton">Tagasi mängija vaatesse</button>
     </div>
-    <div class="row admin-only" style="justify-content:center">
-      <button id="mClose">Sulge</button>
+  </section>
+
+  <!-- Win dialog -->
+  <section class="dialog" id="winDialog">
+    <div class="box">
+      <h2>Häid jõule!</h2>
+      <p id="winIntro">Leidsid kõik üles ajaga</p>
+      <div class="big-number" id="winTime">0:00</div>
+      <p id="winDetails"></p>
+      <div class="player-only">
+        <p class="message" id="submitStatus"></p>
+        <div id="winLeaderboard"></div>
+      </div>
+      <div class="player-only hidden" id="manualResult">
+        <label for="resultCodeOutput">Sinu tulemuse kood: saada see adminile (nt Teamsis)</label>
+        <input id="resultCodeOutput" class="result-code" readonly>
+        <div class="button-row"><button class="btn-primary" id="copyResultButton">Kopeeri kood</button></div>
+      </div>
+      <div class="button-row admin-only">
+        <button id="closeWinButton">Sulge</button>
+      </div>
     </div>
-  </div>
-</div>
+  </section>
 
-<!-- Admin results -->
-<div id="resultsModal" class="screen hidden" style="background:rgba(5,14,26,.75)">
-  <div class="box">
-    <h2 style="text-align:center">Tulemused</h2>
-    <div id="liveWrap" class="hidden">
-      <p style="margin-bottom:0"><b>Edetabel reaalajas</b> · pilt <span class="code" id="liveCode"></span> · uueneb iga 10 s <button id="liveRefresh" style="padding:2px 8px;font-size:12px;margin-left:6px">Värskenda</button></p>
-      <div id="liveBoard"></div>
-      <hr style="border:none;border-top:1px solid #d6e1ec;margin:16px 0 8px">
-      <p style="font-size:13px;color:#5a7491;margin:0">Kui mõne mängija automaatne saatmine ebaõnnestus, saad tema tulemuse koodi lisada käsitsi allpool.</p>
+  <!-- Admin results -->
+  <section class="screen screen--dim hidden" id="resultsScreen">
+    <div class="box box--wide">
+      <h2>Tulemused</h2>
+      <div class="hidden" id="liveSection">
+        <p>
+          <b>Edetabel reaalajas</b> · pilt <span class="code-chip" id="liveGameCode"></span> · uueneb iga 10 s
+          <button class="btn-small" id="refreshLiveButton">Värskenda</button>
+        </p>
+        <div id="liveLeaderboard"></div>
+        <hr>
+        <p class="hint-text">Kui mõne mängija automaatne saatmine ebaõnnestus, saad tema tulemuse koodi lisada käsitsi allpool.</p>
+      </div>
+      <p>Kleebi siia mängijate saadetud tulemuse koodid (võib mitu korraga, nt terve Teamsi vestluse):</p>
+      <textarea id="resultCodesInput" placeholder="PARTEL.…"></textarea>
+      <div class="button-row button-row--start">
+        <button class="btn-primary" id="addResultsButton">Lisa tulemused</button>
+        <button id="copyTableButton">Kopeeri tabel</button>
+        <button id="clearResultsButton">Tühjenda</button>
+        <button class="push-right" id="closeResultsButton">Sulge</button>
+      </div>
+      <p class="message message--ok" id="resultsMessage"></p>
+      <div id="manualResultsTable"></div>
     </div>
-    <p>Kleebi siia mängijate saadetud tulemuse koodid (võib mitu korraga, nt terve Teamsi vestluse):</p>
-    <textarea id="resIn" placeholder="PARTEL.…"></textarea>
-    <div class="row" style="justify-content:flex-start">
-      <button class="primary" id="resAdd">Lisa tulemused</button>
-      <button id="resCopy">Kopeeri tabel</button>
-      <button id="resClear">Tühjenda</button>
-      <button id="resClose" style="margin-left:auto">Sulge</button>
-    </div>
-    <p class="err" id="resMsg" style="color:#1f7a34"></p>
-    <div id="resTable"></div>
-  </div>
-</div>
+  </section>
 
-<script>
-(() => {
-const W = 1800, H = 1100, RES = 1.5;
-const TOP = 300, BOTTOM = 1080, LEFT = 30, RIGHT = W - 30;
-const DIFF = {
-  kerge:    { n: 110, d: 0.05, scale: 1.12, buildings: 4, label: 'Kerge',    targets: ['elf','rudolf','gift'] },
-  keskmine: { n: 230, d: 0.13, scale: 1.00, buildings: 6, label: 'Keskmine', targets: ['elf','rudolf','gift','santa','snowman'] },
-  raske:    { n: 340, d: 0.22, scale: 0.88, buildings: 8, label: 'Raske',    targets: ['elf','rudolf','gift','santa','snowman','tree','mitten'] }
-};
-
-const COATS = ['#c0392b','#2e86de','#27ae60','#8e44ad','#f39c12','#16a085','#d35400','#34495e','#e84393','#6d4c41','#1abc9c','#2c3e50','#b71540','#0a3d62','#78e08f','#e58e26'];
-const PANTS = ['#2d3436','#34495e','#3d3d6b','#5d4037','#1e272e','#4b6584'];
-const MITTENS = ['#e74c3c','#f1c40f','#3498db','#ecf0f1','#9b59b6','#2ecc71','#e67e22'];
-const SKINS = ['#f6d5b8','#e8b98f','#c68e62','#8d5a3b','#f2c9a0','#d9a679'];
-const HAIRS = ['#3b2a20','#6d4c41','#e0b44c','#1e1e1e','#a0522d','#c9c9c9','#d35400'];
-const HATS = ['#c0392b','#2980b9','#8e44ad','#f39c12','#e84393','#2c3e50','#16a085','#ecf0f1','#d35400','#7f8c8d'];
-const GREENS = ['#1f9d3a','#27ae60','#2e7d32','#1e8449','#3a9d23'];
-const TRIMS = ['#ffffff','#f1c40f','#e74c3c','#2c3e50'];
-const SCARF = ['#c0392b','#2980b9','#f1c40f','#ecf0f1','#8e44ad','#27ae60','#e67e22','#e84393','#2c3e50','#16a085'];
-const BOXES = ['#c0392b','#2980b9','#27ae60','#8e44ad','#e84393','#16a085','#ecf0f1','#d35400','#2c3e50','#e74c3c'];
-const GOLDS = ['#f4c430','#f1c40f','#e5b80b','#f39c12'];
-const RIBBONS = ['#ffffff','#f1c40f','#c0392b','#2e86de','#27ae60','#8e44ad'];
-
-const TARGET_DEFS = [
-  { key: 'elf',     label: 'Päkapikk Pärtel', hint: 'roheline teravmüts + puna-valge triibuline sall' },
-  { key: 'rudolf',  label: 'Rudolf',          hint: 'punase ninaga põhjapõder' },
-  { key: 'gift',    label: 'Kuldne kink',     hint: 'kuldne kast punase lindiga' },
-  { key: 'santa',   label: 'Jõuluvana',       hint: 'punane kasukas + jõuluvanamüts + valge habe' },
-  { key: 'snowman', label: 'Lumememm Lumi',   hint: 'kuldse paelaga kübar + sinine sall' },
-  { key: 'tree',    label: 'Kuldne kuusk',    hint: 'ainult kuldsed ehted + punane täht' },
-  { key: 'mitten',  label: 'Kadunud kinnas',  hint: 'sinine kinnas valge äärega' }
-];
-
-// ---------- helpers ----------
-function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
-let R = Math.random;
-const rnd = (a,b) => a + R()*(b-a);
-const pick = arr => arr[Math.floor(R()*arr.length)];
-function circle(c,x,y,r){c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill()}
-function ell(c,x,y,rx,ry){c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fill()}
-function rr(c,x,y,w,h,r){c.beginPath();c.roundRect?c.roundRect(x,y,w,h,r):c.rect(x,y,w,h);c.fill()}
-const fmt = ms => { const s = Math.max(0, Math.floor(ms/1000)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); };
-
-// ---------- object factories ----------
-function isElfCombo(p){
-  return p.hat === 'pointy' && GREENS.includes(p.hatColor) && p.scarf && p.scarf.a === '#d62828' && p.scarf.b === '#ffffff';
-}
-const REDS = ['#c0392b','#d62828','#b71540'];
-function isSantaCombo(p){ return p.hat==='santa' && p.beard && REDS.includes(p.coat); }
-function santa(){
-  return { type:'person', target:'santa', coat:'#d62828', pants:'#2d3436', mitten:'#2d3436', skin:'#f2c9a0',
-    hair:'#e6e6e6', glasses:false, wave:R()<0.5, flip:R()<0.5, hat:'santa', beard:true, belt:true, scarf:null };
-}
-function randPerson(d){
-  const p = { type:'person', coat:pick(COATS), pants:pick(PANTS), mitten:pick(MITTENS), skin:pick(SKINS),
-    hair:pick(HAIRS), glasses:R()<0.14, wave:R()<0.12, flip:R()<0.5 };
-  const h = R();
-  p.hat = h<0.28?'beanie':h<0.44?'santa':h<0.66?'pointy':h<0.82?'earmuffs':'none';
-  p.hatColor = pick(HATS); p.hatTrim = pick(TRIMS);
-  if (p.hat === 'pointy'){
-    p.hatTrim = R()<0.5 ? null : pick(TRIMS);
-    p.bell = pick(['#f1c40f','#ffffff','#e74c3c']);
-    if (R() < d*2.6) p.hatColor = pick(GREENS);
-  }
-  if (p.hat === 'beanie' && R() < d) p.hatColor = pick(GREENS);
-  const s = R();
-  if (s < d*1.6) p.scarf = { a:'#d62828', b:'#ffffff' };
-  else if (s < d*2.2) p.scarf = { a:'#d62828', b: pick(['#f1c40f','#f8c8d0','#27ae60']) };
-  else if (s < 0.8) p.scarf = { a:pick(SCARF), b: R()<0.5 ? pick(SCARF) : null };
-  else p.scarf = null;
-  if (isElfCombo(p)) p.scarf = { a:'#d62828', b:null };
-  if (R() < 0.05 + d*0.8){ p.beard = true; p.hair = pick(['#c9c9c9','#e6e6e6','#9e9e9e']); }
-  if (R() < d*0.9){ p.hat = 'santa'; p.coat = pick(REDS); }
-  if (isSantaCombo(p)) { if (R()<0.5) p.beard=false; else p.coat=pick(['#2980b9','#27ae60','#8e44ad']); }
-  return p;
-}
-function elf(){
-  return { type:'person', target:'elf', coat:'#2e7d32', pants:'#7a3b16', mitten:'#d62828', skin:'#f6d5b8',
-    hair:'#a0522d', glasses:true, wave:false, flip:R()<0.5, hat:'pointy', hatColor:'#1f9d3a', hatTrim:null,
-    bell:'#f1c40f', scarf:{ a:'#d62828', b:'#ffffff' } };
-}
-function randReindeer(d){
-  return { type:'reindeer', fur:pick(['#8d6e63','#795548','#a1887f','#6d4c41']), nose:pick(['#1e1e1e','#3e2723','#2d2d2d']),
-    collar: R() < 0.25 + d ? pick(['#c0392b','#27ae60','#2980b9','#f1c40f']) : null, flip:R()<0.5 };
-}
-function rudolf(){ return { type:'reindeer', target:'rudolf', fur:'#8d6e63', nose:'#ff2a2a', collar:null, glow:true, flip:R()<0.5 }; }
-function randGift(d){
-  let box = pick(BOXES), ribbon = pick(RIBBONS);
-  if (R() < d*2.2){ box = pick(GOLDS); ribbon = pick(['#2e86de','#27ae60','#ffffff','#8e44ad']); }
-  if (box === ribbon) ribbon = '#ffffff';
-  if (box === '#ffffff' || box === '#ecf0f1') ribbon = pick(['#c0392b','#27ae60','#2980b9']);
-  return { type:'gift', box, ribbon, dots: R()<0.3 ? pick(['#ffffff','#f1c40f','#2c3e50']) : null, flip:false };
-}
-function goldGift(){ return { type:'gift', target:'gift', box:'#f4c430', ribbon:'#d62828', dots:null, shine:true, flip:false }; }
-function randTree(){
-  const orn = [];
-  for (let i=0;i<9;i++){
-    const layer = Math.floor(R()*3), base = -10 - layer*22, w = 30 - layer*7;
-    const t = R(); const y = base - 4 - t*22; const half = w*(1-(base - y)/34)*0.85;
-    orn.push({ x: rnd(-half, half), y, col: pick(['#e74c3c','#f1c40f','#3498db','#ecf0f1','#e84393']) });
-  }
-  return { type:'tree', green:pick(['#1e8449','#196f3d','#239b56','#145a32']), orn, star:'#f4d03f', flip:false };
-}
-function randTreeD(d){
-  const t=randTree();
-  if (R()<d*1.4) t.orn.forEach(o=>o.col='#f1c40f');
-  else if (R()<d*1.2) t.star='#e74c3c';
-  return t;
-}
-function goldTree(){ const t=randTree(); t.target='tree'; t.green='#1e8449'; t.orn.forEach(o=>o.col='#f1c40f'); t.star='#e74c3c'; return t; }
-function randSnowman(d=0){
-  const p={ type:'snowman', scarf:pick(SCARF), flip:R()<0.5, hat:R()<0.75, band:pick(['#c0392b','#27ae60','#2980b9','#8e44ad']) };
-  if (R()<d*2) p.band='#f1c40f';
-  if (R()<d*1.5) p.scarf='#2980b9';
-  if (p.hat && p.band==='#f1c40f' && p.scarf==='#2980b9') p.scarf='#c0392b';
-  return p;
-}
-function snowLumi(){ return { type:'snowman', target:'snowman', scarf:'#2980b9', flip:R()<0.5, hat:true, band:'#f1c40f' }; }
-function randMitten(d){
-  let col=pick(['#c0392b','#27ae60','#f1c40f','#8e44ad','#e67e22','#e84393']), cuff=pick(['#ffffff','#2c3e50','#f1c40f']);
-  if (R()<d*2.5) { col='#2980b9'; cuff=pick(['#2980b9','#f1c40f','#2c3e50']); }
-  if (R()<d*1.5) { cuff='#ffffff'; col=pick(['#1abc9c','#8e44ad','#5dade2']); }
-  return { type:'mitten', col, cuff, rot:rnd(-0.9,0.9), flip:R()<0.5 };
-}
-function lostMitten(){ return { type:'mitten', target:'mitten', col:'#2471c8', cuff:'#ffffff', rot:rnd(-0.6,0.6), flip:R()<0.5 }; }
-function drawMitten(c,p){
-  c.save();c.translate(p.x,p.y);c.scale(p.flip?-p.s*1.35:p.s*1.35,p.s*1.35);
-  c.fillStyle='rgba(60,90,130,.2)';ell(c,0,0,9,2.4);
-  c.rotate(p.rot);
-  c.fillStyle=p.col;rr(c,-5.5,-15,11,12,5);ell(c,-6,-8,2.6,4);
-  c.fillStyle=p.cuff;rr(c,-6.2,-4.5,12.4,4.2,1.5);
-  c.restore();
-}
-function randLamp(){ return { type:'lamp', flip:false }; }
-
-// ---------- drawing ----------
-function drawScarf(c,sc){
-  if (!sc) return;
-  const seg=(x,y,w,h,i)=>{c.fillStyle=(sc.b&&i%2)?sc.b:sc.a;c.fillRect(x,y,w,h)};
-  for (let i=0;i<4;i++) seg(-8+i*4,-36.5,4,4.5,i);
-  for (let j=0;j<3;j++) seg(2,-32+j*3.4,4.6,3.4,j+1);
-}
-function drawHat(c,p){
-  switch(p.hat){
-    case 'beanie':
-      c.fillStyle=p.hatColor;c.beginPath();c.arc(0,-46,8.7,Math.PI,2*Math.PI);c.fill();
-      c.fillStyle=p.hatTrim;c.fillRect(-9.2,-47.5,18.4,3.6);circle(c,0,-55.6,2.9);break;
-    case 'pointy':
-      c.fillStyle=p.hatColor;c.beginPath();c.moveTo(-9.2,-46);c.quadraticCurveTo(-2,-59,9,-66);
-      c.quadraticCurveTo(4,-56,9.2,-46);c.closePath();c.fill();
-      if (p.hatTrim){c.fillStyle=p.hatTrim;c.fillRect(-9.6,-48,19.2,3.6)}
-      c.fillStyle=p.bell||'#f1c40f';circle(c,9.6,-66,2.7);break;
-    case 'santa':
-      c.fillStyle='#d62828';c.beginPath();c.moveTo(-9.2,-47);c.quadraticCurveTo(0,-63,13,-58);
-      c.quadraticCurveTo(6,-54,9.2,-47);c.closePath();c.fill();
-      c.fillStyle='#fff';c.fillRect(-9.6,-49.5,19.2,4);circle(c,13,-58,3);break;
-    case 'earmuffs':
-      c.strokeStyle='#555';c.lineWidth=1.6;c.beginPath();c.arc(0,-44,8.6,Math.PI*1.08,Math.PI*1.92);c.stroke();
-      c.fillStyle=p.hatColor;circle(c,-8.6,-43,3.4);circle(c,8.6,-43,3.4);break;
-  }
-}
-function drawPerson(c,p){
-  c.save();c.translate(p.x,p.y);c.scale(p.flip?-p.s:p.s,p.s);
-  c.fillStyle='rgba(60,90,130,.18)';ell(c,0,0,13,3.5);
-  c.fillStyle=p.pants;c.fillRect(-7,-14,5,12.5);c.fillRect(2,-14,5,12.5);
-  c.fillStyle='#3b2a20';rr(c,-9,-3.5,8,4,2);rr(c,1,-3.5,8,4,2);
-  c.fillStyle=p.coat;c.beginPath();c.moveTo(-11,-12);c.lineTo(-9,-33);c.quadraticCurveTo(0,-38,9,-33);c.lineTo(11,-12);c.closePath();c.fill();
-  c.strokeStyle='rgba(0,0,0,.22)';c.lineWidth=1;c.beginPath();c.moveTo(0,-32);c.lineTo(0,-13);c.stroke();
-  c.strokeStyle=p.coat;c.lineWidth=5;c.lineCap='round';c.beginPath();
-  c.moveTo(-9,-30);c.lineTo(-14,-18);c.moveTo(9,-30);
-  if (p.wave) c.lineTo(15,-41); else c.lineTo(14,-18);
-  c.stroke();
-  c.fillStyle=p.mitten;circle(c,-14,-17,2.9);if(p.wave)circle(c,15.5,-42.5,2.9);else circle(c,14,-17,2.9);
-  c.fillStyle=p.skin;circle(c,0,-43,8);
-  if (p.hat==='none'||p.hat==='earmuffs'){c.fillStyle=p.hair;c.beginPath();c.arc(0,-44,8.5,Math.PI*0.95,Math.PI*2.05);c.fill();
-    c.fillStyle=p.skin;ell(c,0,-41.5,6.4,4.6);}
-  c.fillStyle='#222';circle(c,-2.8,-43.5,1.15);circle(c,2.8,-43.5,1.15);
-  c.fillStyle='rgba(230,100,100,.35)';circle(c,-4.8,-40.3,1.6);circle(c,4.8,-40.3,1.6);
-  if (p.glasses){c.strokeStyle='#222';c.lineWidth=0.9;c.beginPath();c.arc(-2.9,-43.5,2.5,0,7);c.moveTo(5.4,-43.5);c.arc(2.9,-43.5,2.5,0,7);c.moveTo(-0.4,-43.5);c.lineTo(0.4,-43.5);c.stroke();}
-  drawScarf(c,p.scarf);
-  if (p.belt){ c.fillStyle='#1e1e1e'; c.fillRect(-10.6,-21,21.2,2.8); c.fillStyle='#f1c40f'; c.fillRect(-2,-21.4,4,3.6); c.fillStyle='#fff'; c.fillRect(-0.8,-32,1.6,10); }
-  if (p.beard){ c.fillStyle=p.hair||'#e6e6e6'; c.beginPath(); c.moveTo(-7.4,-42); c.quadraticCurveTo(-7,-33,0,-30.5); c.quadraticCurveTo(7,-33,7.4,-42);
-    c.quadraticCurveTo(4,-38.5,0,-39); c.quadraticCurveTo(-4,-38.5,-7.4,-42); c.fill(); }
-  drawHat(c,p);
-  c.restore();
-}
-function drawReindeer(c,p){
-  c.save();c.translate(p.x,p.y);c.scale(p.flip?-p.s:p.s,p.s);
-  c.fillStyle='rgba(60,90,130,.18)';ell(c,0,0,21,4);
-  c.strokeStyle='#4e342e';c.lineWidth=3;c.lineCap='round';c.beginPath();
-  [[-12,-13],[-6,-6],[8,8],[13,14]].forEach(([a,b])=>{c.moveTo(a,-19);c.lineTo(b,-1)});c.stroke();
-  c.fillStyle=p.fur;ell(c,0,-23,18,9.5);
-  c.fillStyle='#d7ccc8';ell(c,1,-18.5,11,3.8);ell(c,-18,-26,3.2,2.6);
-  c.strokeStyle=p.fur;c.lineWidth=7;c.beginPath();c.moveTo(10,-27);c.lineTo(17,-39);c.stroke();
-  c.fillStyle=p.fur;ell(c,19,-41,6.6,5.6);
-  c.fillStyle='#bcaaa4';ell(c,24.5,-39,4.2,3.1);
-  c.strokeStyle='#a1887f';c.lineWidth=2;c.beginPath();
-  c.moveTo(16.5,-46);c.lineTo(12.5,-58);c.moveTo(14.6,-52);c.lineTo(9.5,-54.5);
-  c.moveTo(20.5,-46.5);c.lineTo(24.5,-58);c.moveTo(22.6,-52.5);c.lineTo(27.5,-55);c.stroke();
-  c.fillStyle=p.fur;ell(c,14,-45,3.2,1.6);
-  c.fillStyle='#1e1e1e';circle(c,20.5,-42.8,1.1);
-  if (p.collar){c.strokeStyle=p.collar;c.lineWidth=3;c.beginPath();c.moveTo(11.5,-33);c.lineTo(17,-30.5);c.stroke();c.fillStyle='#f1c40f';circle(c,14.5,-29,1.8);}
-  if (p.glow){const g=c.createRadialGradient(28.5,-39.5,0,28.5,-39.5,7);g.addColorStop(0,'rgba(255,60,60,.65)');g.addColorStop(1,'rgba(255,60,60,0)');c.fillStyle=g;circle(c,28.5,-39.5,7);}
-  c.fillStyle=p.nose;circle(c,28.5,-39.5,2.7);
-  c.restore();
-}
-function drawGift(c,p){
-  c.save();c.translate(p.x,p.y);c.scale(p.s,p.s);
-  c.fillStyle='rgba(60,90,130,.18)';ell(c,0,0,15,3.5);
-  c.fillStyle=p.box;rr(c,-12,-22,24,22,2);
-  if (p.dots){c.fillStyle=p.dots;[[-8,-17],[6,-6],[-6,-6],[8,-17],[0,-12]].forEach(([x,y])=>circle(c,x,y,1.4));}
-  c.fillStyle='rgba(0,0,0,.13)';c.fillRect(6,-22,6,22);
-  c.fillStyle=p.box;rr(c,-13.5,-27,27,6,1.5);
-  c.fillStyle='rgba(0,0,0,.08)';c.fillRect(-13.5,-22.5,27,1.5);
-  c.fillStyle=p.ribbon;c.fillRect(-2.3,-27,4.6,27);
-  c.save();c.translate(-4.5,-29.5);c.rotate(-0.4);ell(c,0,0,4.6,2.7);c.restore();
-  c.save();c.translate(4.5,-29.5);c.rotate(0.4);ell(c,0,0,4.6,2.7);c.restore();
-  circle(c,0,-28.5,2);
-  if (p.shine){c.fillStyle='rgba(255,255,255,.55)';c.fillRect(-10,-20,2.5,16);c.fillStyle='rgba(255,250,200,.9)';
-    star(c,-9,-31,3.2,1.2);}
-  c.restore();
-}
-function star(c,x,y,r1,r2){c.beginPath();for(let i=0;i<10;i++){const r=i%2?r2:r1,a=-Math.PI/2+i*Math.PI/5;c.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r)}c.closePath();c.fill()}
-function drawTree(c,p){
-  c.save();c.translate(p.x,p.y);c.scale(p.s,p.s);
-  c.fillStyle='rgba(60,90,130,.2)';ell(c,0,0,26,6);
-  c.fillStyle='#6d4c41';c.fillRect(-4,-11,8,11);
-  for (let i=0;i<3;i++){const base=-10-i*22,w=30-i*7;
-    c.fillStyle=p.green;c.beginPath();c.moveTo(-w,base);c.lineTo(w,base);c.lineTo(0,base-34);c.closePath();c.fill();
-    c.fillStyle='rgba(255,255,255,.85)';ell(c,-w*0.45,base-1,w*0.35,2.2);ell(c,w*0.4,base-1.5,w*0.3,2);}
-  p.orn.forEach(o=>{c.fillStyle=o.col;circle(c,o.x,o.y,2.4)});
-  c.fillStyle=p.star||'#f4d03f';star(c,0,-88,6,2.6);
-  c.restore();
-}
-function drawSnowman(c,p){
-  c.save();c.translate(p.x,p.y);c.scale(p.flip?-p.s:p.s,p.s);
-  c.fillStyle='rgba(60,90,130,.2)';ell(c,0,0,16,4);
-  c.fillStyle='#ffffff';c.strokeStyle='#c7dbee';c.lineWidth=1.2;
-  [[0,-13,13],[0,-33,10],[0,-50,7.5]].forEach(([x,y,r])=>{c.beginPath();c.arc(x,y,r,0,7);c.fill();c.stroke()});
-  c.fillStyle='#222';circle(c,-2.6,-51.5,1.1);circle(c,2.6,-51.5,1.1);circle(c,0,-35,1.2);circle(c,0,-30,1.2);
-  c.fillStyle='#e67e22';c.beginPath();c.moveTo(0,-49.5);c.lineTo(9,-48.5);c.lineTo(0,-47.5);c.fill();
-  c.fillStyle=p.scarf;c.fillRect(-7.5,-44,15,3.5);c.fillRect(2,-42,3.5,8);
-  c.strokeStyle='#5d4037';c.lineWidth=1.6;c.beginPath();c.moveTo(-9,-35);c.lineTo(-19,-42);c.moveTo(9,-35);c.lineTo(19,-41);c.stroke();
-  if (p.hat){c.fillStyle='#1e1e1e';c.fillRect(-8,-58,16,2.5);c.fillRect(-5.5,-68,11,10.5);c.fillStyle=p.band||'#c0392b';c.fillRect(-5.5,-61,11,2.6);}
-  c.restore();
-}
-function drawLamp(c,p){
-  c.save();c.translate(p.x,p.y);c.scale(p.s,p.s);
-  c.fillStyle='rgba(60,90,130,.2)';ell(c,0,0,8,2.5);
-  const g=c.createRadialGradient(0,-86,0,0,-86,26);g.addColorStop(0,'rgba(255,220,120,.55)');g.addColorStop(1,'rgba(255,220,120,0)');
-  c.fillStyle=g;circle(c,0,-86,26);
-  c.fillStyle='#2c3e50';c.fillRect(-1.6,-80,3.2,80);c.fillRect(-5,-3,10,3);
-  c.fillStyle='#ffe08a';c.fillRect(-5,-93,10,13);
-  c.fillStyle='#2c3e50';c.beginPath();c.moveTo(-7.5,-93);c.lineTo(7.5,-93);c.lineTo(0,-100);c.closePath();c.fill();c.fillRect(-6,-81,12,2);
-  c.fillStyle='#fff';ell(c,0,-99,6,1.8);
-  c.restore();
-}
-const WALLS=['#b03a2e','#7d5a3c','#2c6e8f','#6c3483','#a04000','#1e6f5c','#c0392b','#5d6d7e'];
-function snowRoof(c,x1,x2,y,peakY,col){
-  c.fillStyle=col;c.beginPath();c.moveTo(x1-8,y);c.lineTo(x2+8,y);c.lineTo((x1+x2)/2,peakY);c.closePath();c.fill();
-  c.fillStyle='#f4f8fc';c.beginPath();c.moveTo(x1-8,y);c.lineTo((x1+x2)/2,peakY);c.lineTo(x2+8,y);
-  c.lineTo(x2+4,y+3);c.lineTo((x1+x2)/2,peakY+7);c.lineTo(x1-4,y+3);c.closePath();c.fill();
-}
-function lights(c,x1,x2,y,n){
-  const cols=['#ff4d4d','#ffd84d','#4dc3ff','#7dff8a','#ff7de1'];
-  for(let i=0;i<=n;i++){c.fillStyle=cols[i%5];circle(c,x1+(x2-x1)*i/n,y+Math.sin(i*1.3)*1.5,1.8);}
-}
-function signText(c,t,x,y,size,col){c.fillStyle=col;c.font=`800 ${size}px Nunito, sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText(t,x,y);c.textBaseline='alphabetic';}
-function drawCafe(c,p){
-  c.save();c.translate(p.x,p.y);c.scale(p.s,p.s);
-  c.fillStyle='rgba(60,90,130,.2)';ell(c,0,0,66,7);
-  c.fillStyle='#5d4037';c.fillRect(30,-112,10,22);
-  c.fillStyle='rgba(255,255,255,.7)';circle(c,36,-118,5);circle(c,41,-126,6);circle(c,37,-135,7);
-  c.fillStyle=p.wall;c.fillRect(-55,-82,110,82);
-  snowRoof(c,-55,55,-82,-118,'#3b2f2f');
-  c.fillStyle='#fdf6e3';rr(c,-30,-79,60,14,3);signText(c,p.sign,0,-72,10,'#3b2f2f');
-  c.fillStyle='#ffe08a';c.fillRect(-48,-58,42,34);
-  c.fillStyle='rgba(120,70,20,.35)';c.fillRect(-48,-36,42,12);
-  c.fillStyle='#fff';circle(c,-38,-40,3);circle(c,-24,-41,3);c.fillStyle='#8d5524';c.fillRect(-30,-47,6,6);
-  c.strokeStyle='#4e342e';c.lineWidth=2;c.strokeRect(-48,-58,42,34);c.beginPath();c.moveTo(-27,-58);c.lineTo(-27,-24);c.stroke();
-  for(let i=0;i<6;i++){c.fillStyle=i%2?'#fff':p.awn;c.beginPath();c.moveTo(-51+i*8,-64);c.lineTo(-43+i*8,-64);c.lineTo(-43+i*8,-58);c.arc(-47+i*8,-58,4,0,Math.PI);c.closePath();c.fill();}
-  c.fillStyle='#4e342e';c.fillRect(8,-52,22,52);c.fillStyle='#f1c40f';circle(c,26,-26,1.6);
-  c.strokeStyle='#1e8449';c.lineWidth=3;c.beginPath();c.arc(19,-40,5,0,7);c.stroke();c.fillStyle='#e74c3c';circle(c,19,-35,1.8);
-  lights(c,-55,55,-84,14);
-  c.fillStyle='#6d4c41';c.fillRect(42,-14,3,14);ell(c,43.5,-14,9,2.5);c.fillStyle='#fff';circle(c,41,-17,1.8);
-  c.restore();
-}
-function drawHouse(c,p){
-  c.save();c.translate(p.x,p.y);c.scale(p.s,p.s);
-  c.fillStyle='rgba(60,90,130,.2)';ell(c,0,0,52,6);
-  c.fillStyle='#5d4037';c.fillRect(18,-108,9,22);
-  c.fillStyle='rgba(255,255,255,.7)';circle(c,23,-114,4);circle(c,27,-121,5);
-  c.fillStyle=p.wall;c.fillRect(-44,-70,88,70);
-  c.strokeStyle='rgba(0,0,0,.12)';c.lineWidth=1;for(let y=-62;y<0;y+=8){c.beginPath();c.moveTo(-44,y);c.lineTo(44,y);c.stroke();}
-  snowRoof(c,-44,44,-70,-112,p.roof);
-  c.fillStyle='#ffd966';c.fillRect(-35,-56,20,18);c.fillRect(15,-56,20,18);c.fillRect(-6,-94,12,12);
-  c.strokeStyle='#fff';c.lineWidth=2;[[-35,-56,20,18],[15,-56,20,18],[-6,-94,12,12]].forEach(r=>c.strokeRect(...r));
-  c.beginPath();c.moveTo(-25,-56);c.lineTo(-25,-38);c.moveTo(25,-56);c.lineTo(25,-38);c.stroke();
-  c.fillStyle='#3e2723';rr(c,-9,-34,18,34,3);c.fillStyle='#f1c40f';circle(c,5,-17,1.5);
-  c.fillStyle='#fff';c.fillRect(-37,-38,24,3);c.fillRect(13,-38,24,3);
-  lights(c,-50,50,-71,12);
-  c.restore();
-}
-function drawKiosk(c,p){
-  c.save();c.translate(p.x,p.y);c.scale(p.s,p.s);
-  c.fillStyle='rgba(60,90,130,.2)';ell(c,0,0,36,5);
-  c.fillStyle=p.wall;c.fillRect(-30,-66,60,66);
-  c.fillStyle='#ffe9b0';c.fillRect(-23,-54,46,24);
-  c.fillStyle='#8d5524';c.fillRect(-27,-31,54,5);
-  c.fillStyle='#c0392b';circle(c,-12,-34,3);c.fillStyle='#fff';circle(c,0,-34,3);c.fillStyle='#8d5524';circle(c,12,-34,3);
-  c.fillStyle='#3b2f2f';c.beginPath();c.moveTo(-36,-66);c.quadraticCurveTo(0,-92,36,-66);c.closePath();c.fill();
-  c.fillStyle='#f4f8fc';c.beginPath();c.moveTo(-36,-66);c.quadraticCurveTo(0,-92,36,-66);c.quadraticCurveTo(0,-84,-36,-66);c.fill();
-  c.fillStyle='#fdf6e3';rr(c,-22,-22,44,12,3);signText(c,p.sign,0,-16,9,'#3b2f2f');
-  lights(c,-30,30,-67,8);
-  c.restore();
-}
-function randBuilding(){
-  const r=R();
-  if(r<0.38) return { type:'cafe', wall:pick(WALLS), awn:pick(['#c0392b','#1e8449','#2471a3']), sign:pick(['KOHVIK','KAKAOBAAR','PAGARIPOOD','TEEMAJA','KONDIITER']) };
-  if(r<0.72) return { type:'house', wall:pick(WALLS), roof:pick(['#3b2f2f','#4a235a','#1b2631','#6e2c00']) };
-  return { type:'kiosk', wall:pick(WALLS), sign:pick(['KAKAO','KOHV','VAHVLID','SAI','PIPARKOOK','SUPP']) };
-}
-function drawObj(c,o){
-  ({person:drawPerson,reindeer:drawReindeer,gift:drawGift,tree:drawTree,snowman:drawSnowman,lamp:drawLamp,mitten:drawMitten,cafe:drawCafe,house:drawHouse,kiosk:drawKiosk})[o.type](c,o);
-}
-
-// ---------- background ----------
-function drawBackground(c, bg){
-  const sky=c.createLinearGradient(0,0,0,250);sky.addColorStop(0,'#0b1d3a');sky.addColorStop(1,'#3d5f8f');
-  c.fillStyle=sky;c.fillRect(0,0,W,260);
-  bg.stars.forEach(s=>{c.fillStyle=`rgba(255,255,255,${s.a})`;circle(c,s.x,s.y,s.r)});
-  c.fillStyle='#fdf6d8';circle(c,bg.moon.x,bg.moon.y,30);c.fillStyle='#0f2442';circle(c,bg.moon.x+12,bg.moon.y-6,27);
-  bg.back.forEach(h=>{
-    c.fillStyle='#1a2c48';c.fillRect(h.x,h.y,h.w,250-h.y);
-    if(h.peak){c.beginPath();c.moveTo(h.x-4,h.y);c.lineTo(h.x+h.w/2,h.y-h.peak);c.lineTo(h.x+h.w+4,h.y);c.closePath();c.fill();}
-    h.win.forEach(w=>{c.fillStyle=w.on?'rgba(255,217,102,.7)':'#24395a';c.fillRect(w.x,w.y,7,9)});
-  });
-  {const ch=bg.church;
-    c.fillStyle='#233a5e';c.fillRect(ch.x,ch.y,90,250-ch.y);c.fillRect(ch.x+28,ch.y-90,34,90);
-    c.beginPath();c.moveTo(ch.x+24,ch.y-90);c.lineTo(ch.x+45,ch.y-160);c.lineTo(ch.x+66,ch.y-90);c.closePath();c.fill();
-    c.fillStyle='#f4f8fc';c.beginPath();c.moveTo(ch.x+40,ch.y-142);c.lineTo(ch.x+45,ch.y-160);c.lineTo(ch.x+50,ch.y-142);c.closePath();c.fill();
-    c.fillStyle='#fdf6d8';circle(c,ch.x+45,ch.y-68,8);c.strokeStyle='#233a5e';c.lineWidth=1.5;c.beginPath();c.moveTo(ch.x+45,ch.y-68);c.lineTo(ch.x+45,ch.y-74);c.moveTo(ch.x+45,ch.y-68);c.lineTo(ch.x+49,ch.y-68);c.stroke();
-    c.fillStyle='#ffd966';[[12,20],[64,20],[12,55],[64,55]].forEach(([a,b])=>{c.beginPath();c.moveTo(ch.x+a,ch.y+b+22);c.lineTo(ch.x+a,ch.y+b+6);c.arc(ch.x+a+7,ch.y+b+6,7,Math.PI,0);c.lineTo(ch.x+a+14,ch.y+b+22);c.fill()});
-  }
-  bg.houses.forEach(h=>{
-    c.fillStyle=h.col;c.fillRect(h.x,h.y,h.w,250-h.y);
-    c.beginPath();c.moveTo(h.x-6,h.y);c.lineTo(h.x+h.w/2,h.y-h.roof);c.lineTo(h.x+h.w+6,h.y);c.closePath();c.fill();
-    c.fillStyle='#f4f8fc';c.beginPath();c.moveTo(h.x-6,h.y);c.lineTo(h.x+h.w/2,h.y-h.roof);c.lineTo(h.x+h.w+6,h.y);
-    c.lineTo(h.x+h.w+2,h.y+3);c.lineTo(h.x+h.w/2,h.y-h.roof+5);c.lineTo(h.x-2,h.y+3);c.closePath();c.fill();
-    h.win.forEach(w=>{c.fillStyle=w.on?'#ffd966':'#2a3b55';c.fillRect(w.x,w.y,9,11)});
-  });
-  const g=c.createLinearGradient(0,235,0,H);g.addColorStop(0,'#dfe9f4');g.addColorStop(1,'#f7fbff');
-  c.fillStyle=g;c.fillRect(0,235,W,H-235);
-  c.fillStyle='rgba(170,195,225,.25)';bg.drifts.forEach(d=>ell(c,d.x,d.y,d.rx,d.ry));
-  // ice rink
-  c.fillStyle='#cfe7f6';c.strokeStyle='#9cc6e2';c.lineWidth=5;
-  c.beginPath();c.ellipse(bg.rink.x,bg.rink.y,bg.rink.rx,bg.rink.ry,0,0,7);c.fill();c.stroke();
-  c.strokeStyle='rgba(255,255,255,.7)';c.lineWidth=2;
-  for(let i=0;i<6;i++){c.beginPath();c.ellipse(bg.rink.x+rndStatic(i)*80-40,bg.rink.y,bg.rink.rx*(0.3+i*0.1),bg.rink.ry*(0.25+i*0.1),0,3.6,5.6);c.stroke();}
-  // garland
-  c.strokeStyle='#2d4a2b';c.lineWidth=2;c.beginPath();
-  for(let x=0;x<=W;x+=10){const y=238+Math.sin(x/90)*8+((x/180|0)%2?6:0)*Math.sin((x%180)/180*Math.PI);x?c.lineTo(x,y):c.moveTo(x,y)}c.stroke();
-  for(let x=15;x<W;x+=30){const y=238+Math.sin(x/90)*8+((x/180|0)%2?6:0)*Math.sin((x%180)/180*Math.PI);
-    c.fillStyle=['#ff4d4d','#ffd84d','#4dc3ff','#7dff8a','#ff7de1'][(x/30|0)%5];circle(c,x,y+4,3.2)}
-  // stalls
-  bg.stalls.forEach(s=>{
-    c.fillStyle='rgba(60,90,130,.18)';ell(c,s.x+s.w/2,s.y,s.w*0.55,6);
-    c.fillStyle='#8d5524';c.fillRect(s.x,s.y-72,s.w,72);
-    c.fillStyle='#5d3a17';c.fillRect(s.x+6,s.y-60,s.w-12,34);
-    c.fillStyle='#ffe9b0';c.fillRect(s.x+9,s.y-57,s.w-18,28);
-    s.goods.forEach(gd=>{c.fillStyle=gd.c;circle(c,gd.x,s.y-33,gd.r)});
-    c.fillStyle='#a0692f';c.fillRect(s.x-4,s.y-28,s.w+8,6);
-    const n=8,sw=(s.w+16)/n;
-    for(let i=0;i<n;i++){c.fillStyle=i%2?'#fff':s.awn;c.beginPath();c.moveTo(s.x-8+i*sw,s.y-92);c.lineTo(s.x-8+(i+1)*sw,s.y-92);
-      c.lineTo(s.x-8+(i+1)*sw,s.y-74);c.arc(s.x-8+(i+0.5)*sw,s.y-74,sw/2,0,Math.PI);c.closePath();c.fill();}
-    c.fillStyle='#f4f8fc';rr(c,s.x-10,s.y-98,s.w+20,8,4);
-    c.fillStyle='#14273d';c.font='bold 12px Nunito, sans-serif';c.textAlign='center';c.fillText(s.sign,s.x+s.w/2,s.y-8);
-  });
-}
-const rndStatic = i => ((Math.sin(i*12.9898)*43758.5453)%1+1)%1;
-
-// ---------- generation ----------
-function generate(diffKey, seed){
-  R = mulberry32(seed);
-  const cfg = DIFF[diffKey], n = cfg.n, d = cfg.d;
-  const bg = { stars:[], houses:[], drifts:[], stalls:[] };
-  for(let i=0;i<70;i++) bg.stars.push({x:rnd(0,W),y:rnd(5,170),r:rnd(0.6,1.8),a:rnd(0.4,1)});
-  bg.moon={x:rnd(200,W-200),y:rnd(50,90)};
-  bg.back=[]; let bx=-30; while(bx<W){const w=rnd(60,130),y=rnd(95,150),h={x:bx,y,w,peak:R()<0.4?rnd(15,35):0,win:[]};
-    for(let wx=bx+8;wx<bx+w-12;wx+=16)for(let wy=y+10;wy<200;wy+=18)h.win.push({x:wx,y:wy,on:R()<0.35});bg.back.push(h);bx+=w+rnd(-10,10);}
-  bg.church={x:rnd(150,W-250),y:rnd(120,135)};
-  let x=-20; while(x<W){const w=rnd(80,170),y=rnd(140,195),h={x,y,w,roof:rnd(25,45),col:pick(['#273d5c','#2f4a6d','#34506f','#3b2f4f','#40324a']),win:[]};
-    for(let wx=x+12;wx<x+w-18;wx+=22)for(let wy=y+12;wy<235;wy+=24)h.win.push({x:wx,y:wy,on:R()<0.6});bg.houses.push(h);x+=w+rnd(4,20);}
-  for(let i=0;i<40;i++) bg.drifts.push({x:rnd(0,W),y:rnd(280,H),rx:rnd(40,140),ry:rnd(6,16)});
-  bg.rink={x:rnd(450,W-450),y:rnd(600,820),rx:rnd(220,290),ry:rnd(90,120)};
-  const signs=['PIPARKOOGID','HÕÕGVEIN','KINGID','SOKID','KÜÜNLAD','MESI','PRAEMANDLID','EHTED'];
-  let sx=rnd(20,90); while(sx<W-150){const w=rnd(120,150);bg.stalls.push({x:sx,y:rnd(285,298),w,awn:pick(['#c0392b','#1e8449','#2471a3']),sign:pick(signs),
-    goods:Array.from({length:5},(_,i)=>({x:sx+16+i*(w-32)/4,c:pick(['#c0392b','#f1c40f','#e67e22','#8e44ad','#27ae60']),r:rnd(3,5)}))});sx+=w+rnd(60,200);}
-
-  // grid cells
-  const NB=cfg.buildings||0;
-  const aw=RIGHT-LEFT, ah=BOTTOM-TOP, cell=Math.sqrt(aw*ah/(n+NB*8));
-  const cols=Math.max(4,Math.round(aw/cell)); let rows=Math.ceil((n+NB*10+8)/cols);
-  const cw=aw/cols, ch=ah/rows;
-  const cells=[]; for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)cells.push({r,c});
-  for(let i=cells.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[cells[i],cells[j]]=[cells[j],cells[i]];}
-  const pos = cl => ({ x: LEFT+(cl.c+0.5+rnd(-0.38,0.38))*cw, y: TOP+(cl.r+0.5+rnd(-0.38,0.38))*ch });
-
-  const objs=[], used=new Set(), targets=[];
-  { const occ=new Set(), idx=new Map(cells.map((cl,k)=>[cl.r+','+cl.c,k])); let nb=0;
-    for(let k=0;k<cells.length&&nb<NB;k++){
-      const cl=cells[k]; if(cl.r<2||cl.c<1||cl.c>cols-2) continue;
-      const fp=[]; for(let dr=-3;dr<=1;dr++)for(let dc=-2;dc<=2;dc++) fp.push((cl.r+dr)+','+(cl.c+dc));
-      if(fp.some(key=>occ.has(key))) continue;
-      for(let dr=-2;dr<=0;dr++)for(let dc=-1;dc<=1;dc++){const key=(cl.r+dr)+','+(cl.c+dc);occ.add(key);if(idx.has(key))used.add(idx.get(key));}
-      occ.add(cl.r+','+cl.c);
-      const b=randBuilding(); Object.assign(b,{x:LEFT+(cl.c+0.5)*cw, y:TOP+(cl.r+0.8)*ch, building:true}); objs.push(b); nb++;
-    }
-  }
-  const MAKE={ elf, rudolf, gift:goldGift, santa, snowman:snowLumi, tree:goldTree, mitten:lostMitten };
-  cfg.targets.map(k=>MAKE[k]()).forEach(t=>{
-    for(const minD of [380,300,230,160,0]){
-      let ok=false;
-      for(let k=0;k<cells.length;k++){
-        if(used.has(k)) continue; const cl=cells[k];
-        if(cl.c<1||cl.c>cols-2||cl.r<1) continue;
-        const p=pos(cl);
-        if(targets.some(o=>Math.hypot(o.x-p.x,o.y-p.y)<minD)) continue;
-        used.add(k); Object.assign(t,p); targets.push(t); objs.push(t); ok=true; break;
-      }
-      if(ok) break;
-    }
-  });
-  let placed=objs.filter(o=>!o.building).length;
-  for(let k=0;k<cells.length && placed<n;k++){
-    if(used.has(k)) continue; const p=pos(cells[k]); const r=R(); let o;
-    if(r<0.52) o=randPerson(d); else if(r<0.62) o=randReindeer(d); else if(r<0.75) o=randGift(d);
-    else if(r<0.85) o=randTreeD(d); else if(r<0.91) o=randSnowman(d); else if(r<0.95) o=randLamp(); else o=randMitten(d);
-    Object.assign(o,p); objs.push(o); placed++;
-  }
-  objs.forEach(o=>{o.s=(0.74+0.5*(o.y-TOP)/ah)*rnd(0.93,1.07)*cfg.scale; if(o.target) o.s=(0.74+0.5*(o.y-TOP)/ah)*cfg.scale; if(o.building) o.s*=1.3;});
-  // keep targets visible: big things in front become gifts, others get nudged aside
-  targets.forEach(t=>{
-    objs.forEach((o,i)=>{
-      if(o===t||o.target||o.building) return;
-      const dx=o.x-t.x, dy=o.y-t.y;
-      if(dy>0 && dy<120 && Math.abs(dx)<55 && (o.type==='tree'||o.type==='snowman'||o.type==='lamp')){
-        const g=randGift(d); Object.assign(g,{x:o.x,y:o.y,s:o.s}); objs[i]=g; o=g;
-      }
-      if(dy>0 && dy<45 && Math.abs(dx)<30){ o.x += (dx>=0?1:-1)*(32-Math.abs(dx)); }
-    });
-  });
-  objs.sort((a,b)=>a.y-b.y);
-  R=Math.random;
-  return { bg, objs, targets };
-}
-
-function bboxOf(o){
-  const s=o.s;
-  if(o.type==='person') return {x:o.x-17*s,y:o.y-69*s,w:34*s,h:71*s};
-  if(o.type==='reindeer') return o.flip ? {x:o.x-32*s,y:o.y-61*s,w:56*s,h:62*s} : {x:o.x-24*s,y:o.y-61*s,w:56*s,h:62*s};
-  if(o.type==='snowman') return {x:o.x-20*s,y:o.y-70*s,w:40*s,h:72*s};
-  if(o.type==='tree') return {x:o.x-30*s,y:o.y-94*s,w:60*s,h:96*s};
-  if(o.type==='mitten') return {x:o.x-16*s,y:o.y-26*s,w:32*s,h:30*s};
-  return {x:o.x-16*s,y:o.y-35*s,w:32*s,h:36*s};
-}
-
-// ---------- DOM / state ----------
-const $ = id => document.getElementById(id);
-const scene=$('scene'), overlay=$('overlay'), stage=$('stage'), vp=$('viewport');
-scene.width=overlay.width=W*RES; scene.height=overlay.height=H*RES;
-const sc=scene.getContext('2d'), oc=overlay.getContext('2d');
-let st=null, zoom=1;
-const flakes=Array.from({length:160},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2.2+0.8,v:Math.random()*0.6+0.35,ph:Math.random()*6}));
-
-function buildCards(){
-  const box=$('targets'); box.innerHTML=''; box.classList.toggle('many', st.targets.length>3);
-  st.targets.forEach(t=>{
-    const def=TARGET_DEFS.find(d=>d.key===t.target);
-    const card=document.createElement('div'); card.className='card'; card.title=def.hint;
-    const cv=document.createElement('canvas'); const dpr=Math.min(3,window.devicePixelRatio||1);
-    cv.width=72*dpr; cv.height=72*dpr; const c=cv.getContext('2d'); c.scale(dpr,dpr);
-    c.fillStyle='#eaf2fb'; circle(c,36,36,34);
-    const copy={...t, flip:false};
-    if(t.type==='person') Object.assign(copy,{x:36,y:71,s:0.98});
-    else if(t.type==='snowman') Object.assign(copy,{x:36,y:69,s:0.88});
-    else if(t.type==='tree') Object.assign(copy,{x:36,y:69,s:0.66});
-    else if(t.type==='mitten') Object.assign(copy,{x:38,y:56,s:1.7,rot:-0.3});
-    else if(t.type==='reindeer') Object.assign(copy,{x:31,y:62,s:0.98});
-    else Object.assign(copy,{x:36,y:58,s:1.45});
-    drawObj(c,copy);
-    const lab=document.createElement('small'); lab.textContent=def.label;
-    card.append(cv,lab); box.append(card); t.card=card;
-  });
-}
-
-// ---------- roles, codes ----------
-const ADMIN_PW_HASH = '1jjvbkju9h5';        // parool: QAClub2026
-const SECRET = 'partel-qa-club-2026';
-function cyrb53(str,seed=0){let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}h1=Math.imul(h1^(h1>>>16),2246822507);h1^=Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507);h2^=Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0);}
-const b64e = s => btoa(unescape(encodeURIComponent(s))).replace(/=+$/,'');
-const b64d = s => decodeURIComponent(escape(atob(s)));
-const store = {
-  get(k,ss){ try{ return (ss?sessionStorage:localStorage).getItem(k); }catch(e){ return null; } },
-  set(k,v,ss){ try{ (ss?sessionStorage:localStorage).setItem(k,v); }catch(e){} },
-  del(k,ss){ try{ (ss?sessionStorage:localStorage).removeItem(k); }catch(e){} }
-};
-let role = null, playerName = '';
-const LV=['kerge','keskmine','raske'];
-// Mängijale näidatav kood: 1. number = tase (1 kerge, 2 keskmine, 3 raske), järgmised 4 = pilt. Nt 24813.
-function parseCode(code){
-  const t=String(code||'').toLowerCase().replace(/\s+/g,'');
-  let m=t.match(/^([123])(\d{4})$/);
-  if(m){ const d=LV[+m[1]-1]; return { diff:d, seed:+m[2], code:`${d}-${+m[2]}` }; }
-  m=t.match(/^(kerge|keskmine|raske)-(\d{1,9})$/);
-  return m ? { diff:m[1], seed:+m[2], code:`${m[1]}-${+m[2]}` } : null;
-}
-function shortCode(code){
-  const m=String(code).match(/^(kerge|keskmine|raske)-(\d+)$/); if(!m) return code;
-  const n=+m[2]; return (n>=1000&&n<=9999) ? (LV.indexOf(m[1])+1)+String(n) : code;
-}
-function makeResult(){
-  const payload = JSON.stringify([playerName, st.code, Math.round(elapsed()), st.misses, st.hints]);
-  return 'PARTEL.' + b64e(payload) + '.' + cyrb53(payload+SECRET).toString(36);
-}
-function readResult(txt){
-  const m = txt.match(/^PARTEL\.([A-Za-z0-9+/]+)\.([a-z0-9]+)$/); if(!m) return null;
-  try{ const payload=b64d(m[1]); const [name,code,ms,misses,hints]=JSON.parse(payload);
-    return { name, code, ms, misses, hints, valid: cyrb53(payload+SECRET).toString(36)===m[2], raw:txt };
-  }catch(e){ return null; }
-}
-
-// ---------- Google Sheets ----------
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxTPgS8nIBSUWHQ1xYa4w5ad_dCJU2t35VjmxGfugFzWas1xaIvBWfMjn52pqjqBKAwbA/exec';   // ← kleebi siia Google Apps Scripti veebirakenduse URL (https://script.google.com/macros/s/.../exec)
-async function apiPost(data){
-  const r = await fetch(SHEET_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(data) });
-  return r.json();
-}
-async function apiBoard(code){
-  const r = await fetch(SHEET_URL + '?code=' + encodeURIComponent(code) + '&t=' + Date.now());
-  return r.json();
-}
-function boardHtml(rows, me, limit){
-  if(!rows || !rows.length) return '<p>Selle pildi tulemusi veel pole.</p>';
-  const idx = me ? rows.findIndex(r=>r.name.toLowerCase()===me.toLowerCase()) : -1;
-  let h='<table><thead><tr><th>Koht</th><th>Nimi</th><th>Aeg</th><th>Mööda</th><th>Vihjed</th></tr></thead><tbody>';
-  const row=(r,i)=>`<tr class="${i===idx?'board-me':(i===0?'first':'')}"><td>${i+1}.</td><td>${esc(r.name)}</td><td class="num">${fmt(r.ms)}</td><td class="num">${r.misses}</td><td class="num">${r.hints}</td></tr>`;
-  rows.slice(0,limit).forEach((r,i)=>h+=row(r,i));
-  if(idx>=limit){ h+='<tr><td colspan="5" style="text-align:center">…</td></tr>'+row(rows[idx],idx); }
-  h+='</tbody></table>';
-  if(rows.length>limit) h+=`<p style="font-size:12px;color:#5a7491">Kokku ${rows.length} mängijat.</p>`;
-  return h;
-}
-let boardTimer=null;
-function stopBoard(){ if(boardTimer){ clearInterval(boardTimer); boardTimer=null; } }
-function pollBoard(code, el, me, limit){
-  stopBoard();
-  const load=()=>apiBoard(code).then(d=>{ if(d&&d.ok) el.innerHTML=boardHtml(d.rows, me, limit); }).catch(()=>{});
-  load(); boardTimer=setInterval(load,10000);
-}
-
-function newGame(diffKey, seed){
-  diffKey = DIFF[diffKey] ? diffKey : 'keskmine';
-  seed = seed || (1000+Math.floor(Math.random()*9000));
-  $('diff').value=diffKey;
-  const g=generate(diffKey, seed);
-  st={ diff:diffKey, seed, code:`${diffKey}-${seed}`, ...g, start:performance.now(), penalty:0, misses:0, hints:0,
-       marks:[], hintRings:[], done:false, endTime:0, showSol:false };
-  st.targets.forEach(t=>{t.found=false; t.box=bboxOf(t);});
-  sc.setTransform(RES,0,0,RES,0,0); sc.clearRect(0,0,W,H);
-  drawBackground(sc, st.bg); st.objs.forEach(o=>drawObj(sc,o));
-  buildCards();
-  $('codeOut').textContent=shortCode(st.code); $('misses').textContent='0'; $('solBtn').textContent='Näita lahendust';
-  if(role==='admin') store.set('partel-admin-mang', st.code);
-  $('modal').classList.remove('show');
-  applyZoom(1);
-}
-
-function elapsed(){ return (st.done?st.endTime:performance.now())-st.start+st.penalty*1000; }
-
-function handleClick(lx,ly){
-  if(!st||st.done||!role) return;
-  const now=performance.now();
-  for(const t of st.targets){
-    const b=t.box, pad=6;
-    if(lx>=b.x-pad&&lx<=b.x+b.w+pad&&ly>=b.y-pad&&ly<=b.y+b.h+pad){
-      if(t.found) return;
-      t.found=true; t.card.classList.add('found');
-      st.marks.push({type:'found',x:b.x+b.w/2,y:b.y+b.h/2,r:Math.max(b.w,b.h)*0.75,t:now});
-      st.hintRings=st.hintRings.filter(h=>h.target!==t);
-      if(st.targets.every(x=>x.found)) finish();
-      return;
-    }
-  }
-  st.misses++; st.penalty+=3; $('misses').textContent=st.misses;
-  st.marks.push({type:'miss',x:lx,y:ly,t:now});
-}
-
-function showWin(ms, misses, hints, resultCode, again){
-  $('mIntro').textContent = again ? 'Oled selle pildi juba lahendanud. Sinu aeg:' : 'Leidsid kõik üles ajaga';
-  $('mTime').textContent=fmt(ms);
-  $('mDetail').textContent=`Möödalaske: ${misses} · vihjeid: ${hints}`;
-  $('mResult').value=resultCode||''; $('mCopied').textContent='';
-  $('mSendStatus').textContent=''; $('mBoard').innerHTML='';
-  $('modal').classList.add('show');
-  if(role!=='player') return;
-  if(!SHEET_URL){ $('mManual').classList.remove('hidden'); return; }
-  $('mManual').classList.add('hidden');
-  $('mSendStatus').textContent='Saadan tulemust…'; $('mSendStatus').style.color='#30475f';
-  const p=readResult(resultCode);
-  const sig=resultCode.split('.').pop();
-  apiPost({ name:p.name, code:p.code, ms:p.ms, misses:p.misses, hints:p.hints, sig })
-    .then(d=>{
-      if(!d||!d.ok) throw new Error(d&&d.status);
-      $('mSendStatus').textContent = d.status==='exists' ? 'Sinu tulemus on edetabelis ✓' : 'Tulemus saadetud ✓';
-      $('mSendStatus').style.color='#1f7a34';
-      $('mBoard').innerHTML=boardHtml(d.rows, p.name, 10);
-      pollBoard(p.code, $('mBoard'), p.name, 10);
-    })
-    .catch(()=>{
-      $('mSendStatus').textContent='Automaatne saatmine ebaõnnestus. Saada tulemuse kood adminile käsitsi.';
-      $('mSendStatus').style.color='#d62828';
-      $('mManual').classList.remove('hidden');
-    });
-}
-function finish(){
-  st.done=true; st.endTime=performance.now();
-  let rc='';
-  if(role==='player'){
-    rc=makeResult();
-    store.set('partel-tulemus-'+st.code+'-'+playerName.toLowerCase(), JSON.stringify({ms:Math.round(elapsed()),misses:st.misses,hints:st.hints,rc}));
-  }
-  const ms=elapsed(), mi=st.misses, hi=st.hints;
-  setTimeout(()=>showWin(ms,mi,hi,rc,false),900);
-}
-
-function hint(){
-  if(!st||st.done) return;
-  const t=st.targets.find(x=>!x.found && !st.hintRings.some(h=>h.target===x)) || st.targets.find(x=>!x.found);
-  if(!t) return;
-  st.hints++; st.penalty+=15;
-  const ang=Math.random()*Math.PI*2, off=Math.random()*90;
-  const h={target:t,x:t.box.x+t.box.w/2+Math.cos(ang)*off,y:t.box.y+t.box.h/2+Math.sin(ang)*off,r:170,t:performance.now()};
-  st.hintRings=st.hintRings.filter(x=>x.target!==t); st.hintRings.push(h);
-  if(zoom>1){ const sw=stage.offsetWidth/W; vp.scrollTo({left:h.x*sw-vp.clientWidth/2, top:h.y*sw-vp.clientHeight/2, behavior:'smooth'}); }
-}
-
-// ---------- overlay loop ----------
-let lastSec=-1;
-function loop(now){
-  oc.setTransform(RES,0,0,RES,0,0); oc.clearRect(0,0,W,H);
-  oc.fillStyle='rgba(255,255,255,.85)';
-  flakes.forEach(f=>{f.y+=f.v;f.x+=Math.sin(now/1400+f.ph)*0.3;if(f.y>H){f.y=-5;f.x=Math.random()*W}circle(oc,f.x,f.y,f.r)});
-  if(st){
-    st.hintRings.forEach(h=>{
-      const p=(Math.sin((now-h.t)/300)+1)/2;
-      oc.strokeStyle=`rgba(244,196,48,${0.55+0.4*p})`; oc.lineWidth=5+3*p; oc.setLineDash([18,12]);
-      oc.beginPath(); oc.arc(h.x,h.y,h.r+p*8,0,7); oc.stroke(); oc.setLineDash([]);
-    });
-    st.marks=st.marks.filter(m=>m.type==='found'||now-m.t<900);
-    st.marks.forEach(m=>{
-      if(m.type==='miss'){
-        const a=1-(now-m.t)/900; oc.strokeStyle=`rgba(214,40,40,${a})`; oc.lineWidth=4; oc.lineCap='round';
-        oc.beginPath(); oc.moveTo(m.x-9,m.y-9); oc.lineTo(m.x+9,m.y+9); oc.moveTo(m.x+9,m.y-9); oc.lineTo(m.x-9,m.y+9); oc.stroke();
-        oc.fillStyle=`rgba(214,40,40,${a})`; oc.font='bold 18px Nunito, sans-serif'; oc.textAlign='left'; oc.fillText('+3 s',m.x+12,m.y-10-(1-a)*14);
-      } else {
-        const k=Math.min(1,(now-m.t)/400), pulse=(now-m.t)<1600?Math.sin((now-m.t)/120)*3:0;
-        oc.strokeStyle='#1f9d3a'; oc.lineWidth=5; oc.beginPath(); oc.arc(m.x,m.y,(m.r+pulse)*(0.4+0.6*k),0,7); oc.stroke();
-        oc.strokeStyle='#fff'; oc.lineWidth=2; oc.beginPath(); oc.arc(m.x,m.y,(m.r+pulse)*(0.4+0.6*k)+4,0,7); oc.stroke();
-      }
-    });
-    if(st.showSol) st.targets.forEach(t=>{
-      const b=t.box, cx=b.x+b.w/2, cy=b.y+b.h/2, r=Math.max(b.w,b.h)*0.8;
-      oc.strokeStyle='#e84393'; oc.lineWidth=4; oc.setLineDash([10,7]);
-      oc.beginPath(); oc.arc(cx,cy,r,0,7); oc.stroke(); oc.setLineDash([]);
-      const lab=TARGET_DEFS.find(d=>d.key===t.target).label;
-      oc.font='bold 16px Nunito, sans-serif'; oc.textAlign='center';
-      const tw=oc.measureText(lab).width+12; oc.fillStyle='#e84393'; oc.fillRect(cx-tw/2,cy-r-26,tw,22);
-      oc.fillStyle='#fff'; oc.fillText(lab,cx,cy-r-9);
-    });
-    const s=Math.floor(elapsed()/1000); if(s!==lastSec){lastSec=s;$('time').textContent=fmt(elapsed());}
-  }
-  requestAnimationFrame(loop);
-}
-
-// ---------- zoom & pan ----------
-function baseWidth(){ return Math.min(vp.clientWidth, vp.clientHeight*W/H); }
-function applyZoom(z, ax, ay){
-  const oldW=stage.offsetWidth||baseWidth(), oldH=oldW*H/W;
-  ax = ax ?? vp.clientWidth/2; ay = ay ?? vp.clientHeight/2;
-  const fx=(vp.scrollLeft+ax-stage.offsetLeft)/oldW, fy=(vp.scrollTop+ay-stage.offsetTop)/oldH;
-  zoom=Math.min(4,Math.max(1,z));
-  const w=baseWidth()*zoom; stage.style.width=w+'px'; stage.style.height=(w*H/W)+'px';
-  vp.scrollLeft=fx*w+stage.offsetLeft-ax; vp.scrollTop=fy*(w*H/W)+stage.offsetTop-ay;
-}
-$('zIn').onclick=()=>applyZoom(zoom*1.4);
-$('zOut').onclick=()=>applyZoom(zoom/1.4);
-vp.addEventListener('wheel',e=>{
-  if(!(e.ctrlKey||e.metaKey)) return; e.preventDefault();
-  const r=vp.getBoundingClientRect(); applyZoom(zoom*(e.deltaY<0?1.15:1/1.15), e.clientX-r.left, e.clientY-r.top);
-},{passive:false});
-window.addEventListener('resize',()=>applyZoom(zoom));
-
-let drag=null, justDragged=false;
-stage.addEventListener('pointerdown',e=>{ if(e.pointerType!=='mouse'||e.button!==0) return;
-  drag={x:e.clientX,y:e.clientY,sl:vp.scrollLeft,stp:vp.scrollTop,moved:false}; });
-window.addEventListener('pointermove',e=>{ if(!drag) return;
-  const dx=e.clientX-drag.x, dy=e.clientY-drag.y;
-  if(!drag.moved && Math.hypot(dx,dy)>6){ drag.moved=true; stage.classList.add('dragging'); }
-  if(drag.moved){ vp.scrollLeft=drag.sl-dx; vp.scrollTop=drag.stp-dy; } });
-window.addEventListener('pointerup',()=>{ if(drag&&drag.moved){justDragged=true;setTimeout(()=>justDragged=false,0);} drag=null; stage.classList.remove('dragging'); });
-stage.addEventListener('click',e=>{
-  if(justDragged) return;
-  const r=scene.getBoundingClientRect();
-  handleClick((e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height);
-});
-
-// ---------- controls ----------
-$('hintBtn').onclick=hint;
-$('newBtn').onclick=()=>newGame($('diff').value);
-$('diff').onchange=()=>newGame($('diff').value);
-$('solBtn').onclick=()=>{ if(!st) return; st.showSol=!st.showSol; $('solBtn').textContent=st.showSol?'Peida lahendus':'Näita lahendust'; };
-$('copyCode').onclick=()=>copyText(shortCode(st.code), $('copyCode'));
-function copyText(txt, btn){
-  const done=()=>{ if(btn){const o=btn.textContent; btn.textContent='Kopeeritud ✓'; setTimeout(()=>btn.textContent=o,1500);} };
-  try{ navigator.clipboard.writeText(txt).then(done, ()=>fallbackCopy(txt,done)); }catch(e){ fallbackCopy(txt,done); }
-}
-function fallbackCopy(txt,done){
-  const ta=document.createElement('textarea'); ta.value=txt; document.body.append(ta); ta.select();
-  try{ document.execCommand('copy'); done(); }catch(e){} ta.remove();
-}
-
-// player
-$('nameIn').value = store.get('partel-nimi') || '';
-function startPlayer(){
-  const name=$('nameIn').value.trim(), pc=parseCode($('codeIn').value);
-  if(!name){ $('startErr').textContent='Sisesta oma nimi.'; return; }
-  if(!pc){ $('startErr').textContent='Kood peab olema 5-kohaline number (nt 24813). Küsi õiget koodi adminilt.'; return; }
-  $('startErr').textContent=''; store.set('partel-nimi', name);
-  role='player'; playerName=name; document.body.classList.remove('admin');
-  $('playerName').textContent=name;
-  $('startScreen').classList.add('hidden');
-  newGame(pc.diff, pc.seed);
-  const prev=store.get('partel-tulemus-'+pc.code+'-'+name.toLowerCase());
-  if(prev){ try{ const p=JSON.parse(prev); st.done=true; st.endTime=st.start+p.ms; st.penalty=0;
-    st.targets.forEach(t=>{t.found=true;t.card.classList.add('found')}); showWin(p.ms,p.misses,p.hints,p.rc,true); }catch(e){} }
-}
-$('startBtn').onclick=startPlayer;
-['nameIn','codeIn'].forEach(id=>$(id).addEventListener('keydown',e=>{ if(e.key==='Enter') startPlayer(); }));
-$('mCopy').onclick=()=>copyText($('mResult').value, $('mCopy'));
-$('mResult').addEventListener('focus',e=>e.target.select());
-
-// admin
-$('toLogin').onclick=()=>{ $('startScreen').classList.add('hidden'); $('loginScreen').classList.remove('hidden'); $('pwIn').focus(); };
-$('toStart').onclick=()=>{ $('loginScreen').classList.add('hidden'); $('startScreen').classList.remove('hidden'); };
-function enterAdmin(){
-  role='admin'; document.body.classList.add('admin');
-  $('loginScreen').classList.add('hidden'); $('startScreen').classList.add('hidden');
-  const pc=parseCode(store.get('partel-admin-mang'));
-  (pc && pc.seed>=1000 && pc.seed<=9999) ? newGame(pc.diff, pc.seed) : newGame(pc ? pc.diff : 'keskmine');
-}
-function login(){
-  if(cyrb53($('pwIn').value,7).toString(36)!==ADMIN_PW_HASH){ $('loginErr').textContent='Vale parool.'; return; }
-  $('loginErr').textContent=''; $('pwIn').value=''; store.set('partel-admin','1',true); enterAdmin();
-}
-$('loginBtn').onclick=login;
-$('pwIn').addEventListener('keydown',e=>{ if(e.key==='Enter') login(); });
-$('logoutBtn').onclick=()=>{ store.del('partel-admin',true); role=null; document.body.classList.remove('admin');
-  $('resultsModal').classList.add('hidden'); $('modal').classList.remove('show'); $('startScreen').classList.remove('hidden'); };
-$('mClose').onclick=()=>{ $('modal').classList.remove('show'); stopBoard(); };
-
-// results
-function loadResults(){ try{ return JSON.parse(store.get('partel-admin-tulemused')||'[]'); }catch(e){ return []; } }
-function saveResults(list){ store.set('partel-admin-tulemused', JSON.stringify(list)); }
-const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function rankRows(){
-  const list=loadResults(), cur=st?st.code:'';
-  const ok=list.filter(r=>r.valid&&r.code===cur).sort((a,b)=>a.ms-b.ms);
-  const rest=list.filter(r=>!(r.valid&&r.code===cur));
-  return {ok,rest,cur};
-}
-function renderResults(){
-  const {ok,rest,cur}=rankRows();
-  if(!ok.length && !rest.length){ $('resTable').innerHTML=SHEET_URL?'':'<p>Tulemusi veel pole.</p>'; return; }
-  let h='<table><thead><tr><th>Koht</th><th>Nimi</th><th>Aeg</th><th>Mööda</th><th>Vihjed</th><th>Pilt</th><th>Staatus</th></tr></thead><tbody>';
-  ok.forEach((r,i)=>{ h+=`<tr class="${i===0?'first':''}"><td>${i+1}.</td><td>${esc(r.name)}</td><td class="num">${fmt(r.ms)}</td><td class="num">${r.misses}</td><td class="num">${r.hints}</td><td>${esc(shortCode(r.code))}</td><td class="ok">kehtiv</td></tr>`; });
-  rest.forEach(r=>{ const s=!r.valid?'<span class="bad">võltsitud kood</span>':'<span class="other">teine pilt</span>';
-    h+=`<tr><td>–</td><td>${esc(r.name)}</td><td class="num">${fmt(r.ms)}</td><td class="num">${r.misses}</td><td class="num">${r.hints}</td><td>${esc(shortCode(r.code))}</td><td>${s}</td></tr>`; });
-  h+='</tbody></table>'; if(cur) h+=`<p style="font-size:12px;color:#5a7491">Paremusjärjestuses on praeguse pildi (${esc(shortCode(cur))}) kehtivad tulemused.</p>`;
-  $('resTable').innerHTML=h;
-}
-$('resBtn').onclick=()=>{
-  renderResults(); $('resMsg').textContent=''; $('resultsModal').classList.remove('hidden');
-  $('liveWrap').classList.toggle('hidden', !SHEET_URL);
-  if(SHEET_URL){ $('liveCode').textContent=shortCode(st.code); $('liveBoard').innerHTML='<p>Laen…</p>'; pollBoard(st.code, $('liveBoard'), null, 50); }
-};
-$('liveRefresh').onclick=()=>{ if(SHEET_URL) pollBoard(st.code, $('liveBoard'), null, 50); };
-$('resClose').onclick=()=>{ $('resultsModal').classList.add('hidden'); stopBoard(); };
-$('resAdd').onclick=()=>{
-  const found=($('resIn').value.match(/PARTEL\.[A-Za-z0-9+/]+\.[a-z0-9]+/g)||[]).map(readResult).filter(Boolean);
-  const list=loadResults(); let added=0, upd=0;
-  found.forEach(r=>{
-    const i=list.findIndex(x=>x.name.toLowerCase()===r.name.toLowerCase()&&x.code===r.code);
-    if(i<0){ list.push(r); added++; } else if(list[i].raw!==r.raw && (r.valid || !list[i].valid)){ list[i]=r; upd++; }
-  });
-  saveResults(list); $('resIn').value='';
-  $('resMsg').textContent = found.length ? `Lisatud ${added}${upd?`, uuendatud ${upd}`:''}.` : 'Ühtegi tulemuse koodi ei leitud.';
-  renderResults();
-};
-$('resCopy').onclick=()=>{
-  const {ok}=rankRows();
-  const txt=ok.map((r,i)=>`${i+1}. ${r.name} – ${fmt(r.ms)} (mööda ${r.misses}, vihjeid ${r.hints})`).join('\n')||'Tulemusi pole';
-  copyText(txt,$('resCopy'));
-};
-$('resClear').onclick=()=>{
-  if($('resClear').dataset.sure){ saveResults([]); renderResults(); $('resClear').textContent='Tühjenda'; delete $('resClear').dataset.sure; $('resMsg').textContent='Tulemused kustutatud.'; }
-  else { $('resClear').dataset.sure='1'; $('resClear').textContent='Kindel? Vajuta uuesti'; setTimeout(()=>{ $('resClear').textContent='Tühjenda'; delete $('resClear').dataset.sure; },3000); }
-};
-
-// ---------- start ----------
-function start(){
-  applyZoom(1); requestAnimationFrame(loop);
-  if(store.get('partel-admin',true)==='1') enterAdmin();
-  else { const h=parseCode(location.hash.slice(1)); if(h) $('codeIn').value=shortCode(h.code); (store.get('partel-nimi')?$('codeIn'):$('nameIn')).focus(); }
-}
-if(document.fonts&&document.fonts.ready) document.fonts.ready.then(start); else start();
-})();
-</script>
 </body>
 </html>

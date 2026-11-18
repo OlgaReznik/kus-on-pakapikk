@@ -1,0 +1,61 @@
+// Colour sets used when generating the crowd and the scenery.
+
+export const COLORS = {
+  coats: ['#c0392b', '#2e86de', '#27ae60', '#8e44ad', '#f39c12', '#16a085', '#d35400', '#34495e',
+    '#e84393', '#6d4c41', '#1abc9c', '#2c3e50', '#b71540', '#0a3d62', '#78e08f', '#e58e26'],
+  redCoats: ['#c0392b', '#d62828', '#b71540'],
+  nonRedCoats: ['#2980b9', '#27ae60', '#8e44ad'],
+  pants: ['#2d3436', '#34495e', '#3d3d6b', '#5d4037', '#1e272e', '#4b6584'],
+  mittens: ['#e74c3c', '#f1c40f', '#3498db', '#ecf0f1', '#9b59b6', '#2ecc71', '#e67e22'],
+  skins: ['#f6d5b8', '#e8b98f', '#c68e62', '#8d5a3b', '#f2c9a0', '#d9a679'],
+  hair: ['#3b2a20', '#6d4c41', '#e0b44c', '#1e1e1e', '#a0522d', '#c9c9c9', '#d35400'],
+  greyHair: ['#c9c9c9', '#e6e6e6', '#9e9e9e'],
+  hats: ['#c0392b', '#2980b9', '#8e44ad', '#f39c12', '#e84393', '#2c3e50', '#16a085', '#ecf0f1', '#d35400', '#7f8c8d'],
+  greens: ['#1f9d3a', '#27ae60', '#2e7d32', '#1e8449', '#3a9d23'],
+  hatTrims: ['#ffffff', '#f1c40f', '#e74c3c', '#2c3e50'],
+  bells: ['#f1c40f', '#ffffff', '#e74c3c'],
+  scarves: ['#c0392b', '#2980b9', '#f1c40f', '#ecf0f1', '#8e44ad', '#27ae60', '#e67e22', '#e84393', '#2c3e50', '#16a085'],
+  scarfRedPartners: ['#f1c40f', '#f8c8d0', '#27ae60'],
+  boxes: ['#c0392b', '#2980b9', '#27ae60', '#8e44ad', '#e84393', '#16a085', '#ecf0f1', '#d35400', '#2c3e50', '#e74c3c'],
+  golds: ['#f4c430', '#f1c40f', '#e5b80b', '#f39c12'],
+  ribbons: ['#ffffff', '#f1c40f', '#c0392b', '#2e86de', '#27ae60', '#8e44ad'],
+  nonRedRibbons: ['#2e86de', '#27ae60', '#ffffff', '#8e44ad'],
+  giftDots: ['#ffffff', '#f1c40f', '#2c3e50'],
+  fur: ['#8d6e63', '#795548', '#a1887f', '#6d4c41'],
+  darkNoses: ['#1e1e1e', '#3e2723', '#2d2d2d'],
+  collars: ['#c0392b', '#27ae60', '#2980b9', '#f1c40f'],
+  treeGreens: ['#1e8449', '#196f3d', '#239b56', '#145a32'],
+  ornaments: ['#e74c3c', '#f1c40f', '#3498db', '#ecf0f1', '#e84393'],
+  snowmanBands: ['#c0392b', '#27ae60', '#2980b9', '#8e44ad'],
+  mittenColors: ['#c0392b', '#27ae60', '#f1c40f', '#8e44ad', '#e67e22', '#e84393'],
+  mittenCuffs: ['#ffffff', '#2c3e50', '#f1c40f'],
+  blueishMittens: ['#1abc9c', '#8e44ad', '#5dade2'],
+  walls: ['#b03a2e', '#7d5a3c', '#2c6e8f', '#6c3483', '#a04000', '#1e6f5c', '#c0392b', '#5d6d7e'],
+  roofs: ['#3b2f2f', '#4a235a', '#1b2631', '#6e2c00'],
+  awnings: ['#c0392b', '#1e8449', '#2471a3'],
+  stallGoods: ['#c0392b', '#f1c40f', '#e67e22', '#8e44ad', '#27ae60'],
+  skylineHouses: ['#273d5c', '#2f4a6d', '#34506f', '#3b2f4f', '#40324a'],
+  fairyLights: ['#ff4d4d', '#ffd84d', '#4dc3ff', '#7dff8a', '#ff7de1'],
+};
+
+/** Signature colours of the hidden targets. Decoys are generated so they never match all of them. */
+export const TARGET_COLORS = {
+  elfHat: '#1f9d3a',
+  elfScarf: { main: '#d62828', stripe: '#ffffff' },
+  rudolfNose: '#ff2a2a',
+  goldBox: '#f4c430',
+  goldRibbon: '#d62828',
+  santaCoat: '#d62828',
+  snowmanBand: '#f1c40f',
+  snowmanScarf: '#2980b9',
+  goldOrnament: '#f1c40f',
+  redStar: '#e74c3c',
+  lostMitten: '#2471c8',
+  lostMittenCuff: '#ffffff',
+};
+
+export const SIGNS = {
+  stalls: ['PIPARKOOGID', 'HÕÕGVEIN', 'KINGID', 'SOKID', 'KÜÜNLAD', 'MESI', 'PRAEMANDLID', 'EHTED'],
+  cafes: ['KOHVIK', 'KAKAOBAAR', 'PAGARIPOOD', 'TEEMAJA', 'KONDIITER'],
+  kiosks: ['KAKAO', 'KOHV', 'VAHVLID', 'SAI', 'PIPARKOOK', 'SUPP'],
+};
