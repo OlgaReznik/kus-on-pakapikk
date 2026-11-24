@@ -15,6 +15,8 @@ const CARD_POSE = {
   tree: { x: 36, y: 69, scale: 0.66 },
   mitten: { x: 38, y: 56, scale: 1.7, rotation: -0.3 },
   gift: { x: 36, y: 58, scale: 1.45 },
+  gingerbread: { x: 36, y: 56, scale: 1.45 },
+  hat: { x: 33, y: 46, scale: 1.75, rotation: 0 },
 };
 
 function createPortrait(target) {

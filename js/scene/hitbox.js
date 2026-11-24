@@ -7,6 +7,8 @@ const HITBOXES = {
   tree: () => ({ left: -30, top: -94, width: 60, height: 96 }),
   mitten: () => ({ left: -16, top: -26, width: 32, height: 30 }),
   gift: () => ({ left: -16, top: -35, width: 32, height: 36 }),
+  gingerbread: () => ({ left: -16, top: -36, width: 32, height: 38 }),
+  hat: (object) => ({ left: object.flip ? -23 : -17, top: -20, width: 40, height: 23 }),
 };
 
 export function getHitbox(object) {

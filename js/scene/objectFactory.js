@@ -18,6 +18,14 @@ const looksLikeSanta = (person) =>
 const looksLikeLumi = (snowman) =>
   snowman.hasHat && snowman.hatBand === T.snowmanBand && snowman.scarf === T.snowmanScarf;
 
+const looksLikeNortal = (person) =>
+  person.laptop && person.nortalLogo && COLORS.darkBlueCoats.includes(person.coat);
+
+const looksLikeGingerbread = (cookie) => cookie.bow === T.gingerBow && cookie.buttons === T.gingerButtons;
+
+const looksLikeLostHat = (hat) =>
+  COLORS.greens.includes(hat.color) && hat.trim === T.lostHatTrim && hat.bell === T.lostHatBell;
+
 // ---------- People ----------
 
 function pickHatStyle(rng) {
@@ -71,11 +79,20 @@ function createPassenger(rng, decoyRate) {
     person.hatStyle = 'santa';
     person.coat = rng.pick(COLORS.redCoats);
   }
+
+  // Office look: laptops, Nortal logos and dark blue coats – the Nortal employee hides among them.
+  person.laptop = rng.chance(0.04 + decoyRate * 0.6) ? rng.pick(COLORS.laptops) : null;
+  person.nortalLogo = rng.chance(0.04 + decoyRate * 0.6);
+  if (rng.chance(decoyRate * 0.7)) person.coat = rng.pick(COLORS.darkBlueCoats);
   return breakTargetLookalikes(rng, person);
 }
 
 function breakTargetLookalikes(rng, person) {
   if (looksLikeElf(person)) person.scarf = { main: T.elfScarf.main, stripe: null };
+  if (looksLikeNortal(person)) {
+    if (rng.chance(0.5)) person.laptop = null;
+    else person.nortalLogo = false;
+  }
   if (looksLikeSanta(person)) {
     if (rng.chance(0.5)) person.beard = false;
     else person.coat = rng.pick(COLORS.nonRedCoats);
@@ -165,6 +182,40 @@ function createMitten(rng, decoyRate) {
   return { type: 'mitten', color, cuff, rotation: rng.range(-0.9, 0.9), flip: rng.chance(0.5) };
 }
 
+// ---------- Gingerbread men ----------
+
+function createGingerbread(rng, decoyRate) {
+  const cookie = {
+    type: 'gingerbread',
+    dough: rng.pick(COLORS.gingerbread),
+    bow: rng.chance(0.75) ? rng.pick(COLORS.gingerBows) : null,
+    buttons: rng.pick(COLORS.gingerButtons),
+    flip: false,
+  };
+  if (rng.chance(decoyRate * 2)) cookie.bow = T.gingerBow;
+  if (rng.chance(decoyRate * 2)) cookie.buttons = T.gingerButtons;
+  if (looksLikeGingerbread(cookie)) cookie.buttons = '#ffffff';
+  return cookie;
+}
+
+// ---------- Hats lying in the snow ----------
+
+function createLostHat(rng, decoyRate) {
+  const hat = {
+    type: 'hat',
+    color: rng.pick(COLORS.hats),
+    trim: rng.chance(0.7) ? rng.pick(COLORS.hatTrims) : null,
+    bell: rng.pick(COLORS.bells),
+    rotation: rng.range(-0.35, 0.35),
+    flip: rng.chance(0.5),
+  };
+  if (rng.chance(decoyRate * 2.4)) hat.color = rng.pick(COLORS.greens);
+  if (rng.chance(decoyRate * 1.5)) hat.trim = T.lostHatTrim;
+  if (rng.chance(decoyRate * 1.5)) hat.bell = T.lostHatBell;
+  if (looksLikeLostHat(hat)) hat.bell = '#e74c3c';
+  return hat;
+}
+
 const createLamp = () => ({ type: 'lamp', flip: false });
 
 // ---------- Fillers: weighted mix of everything above ----------
@@ -177,6 +228,8 @@ const FILLER_MIX = [
   { weight: 6, create: createSnowman },
   { weight: 4, create: createLamp },
   { weight: 5, create: createMitten },
+  { weight: 4, create: createGingerbread },
+  { weight: 3, create: createLostHat },
 ];
 const FILLER_WEIGHT_TOTAL = FILLER_MIX.reduce((sum, entry) => sum + entry.weight, 0);
 
@@ -228,6 +281,17 @@ const TARGET_FACTORIES = {
   }),
   mitten: (rng) => ({
     type: 'mitten', color: T.lostMitten, cuff: T.lostMittenCuff, rotation: rng.range(-0.6, 0.6), flip: rng.chance(0.5),
+  }),
+  gingerbread: () => ({
+    type: 'gingerbread', dough: '#b5651d', bow: T.gingerBow, buttons: T.gingerButtons, flip: false,
+  }),
+  hat: (rng) => ({
+    type: 'hat', color: T.lostHat, trim: T.lostHatTrim, bell: T.lostHatBell, rotation: rng.range(-0.3, 0.3), flip: rng.chance(0.5),
+  }),
+  nortal: (rng) => ({
+    type: 'person', coat: T.nortalCoat, pants: '#2d3436', mitten: '#2c3e50', skin: rng.pick(COLORS.skins), hair: '#3b2a20',
+    glasses: false, waving: false, flip: rng.chance(0.5), hatStyle: 'none', hatColor: '#2c3e50', hatTrim: null,
+    bellColor: '#ffffff', scarf: null, beard: false, belt: false, laptop: '#bdc3c7', nortalLogo: true,
   }),
 };
 

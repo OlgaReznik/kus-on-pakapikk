@@ -2,7 +2,9 @@ import { SCENE } from '../config.js';
 import { drawBackground } from './background.js';
 import { drawCafe, drawHouse, drawKiosk } from './buildings.js';
 import { drawPerson, drawReindeer } from './characters.js';
-import { drawGift, drawLamp, drawMitten, drawSnowman, drawTree } from './items.js';
+import {
+  drawGift, drawGingerbread, drawLamp, drawLostHat, drawMitten, drawSnowman, drawTree,
+} from './items.js';
 
 const DRAWERS = {
   person: drawPerson,
@@ -12,6 +14,8 @@ const DRAWERS = {
   snowman: drawSnowman,
   lamp: drawLamp,
   mitten: drawMitten,
+  gingerbread: drawGingerbread,
+  hat: drawLostHat,
   cafe: drawCafe,
   house: drawHouse,
   kiosk: drawKiosk,

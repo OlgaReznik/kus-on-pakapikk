@@ -42,12 +42,16 @@ function rows_(code) {
     .sort((a, b) => a.ms - b.ms);
 }
 
-// Mäng saadab tulemuse
+// Mäng saadab tulemuse ({ action: 'submit', ... }) või küsib edetabelit ({ action: 'list', code })
 function doPost(e) {
+  const d = JSON.parse(e.postData.contents);
+  if (d.action === 'list') {
+    const listCode = String(d.code || '').trim().toLowerCase();
+    return json_({ ok: true, rows: listCode ? rows_(listCode) : [] });
+  }
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    const d = JSON.parse(e.postData.contents);
     const name = String(d.name || '').trim().slice(0, 40);
     const code = String(d.code || '').trim().toLowerCase();
     const ms = Math.round(Number(d.ms)), misses = Math.round(Number(d.misses)), hints = Math.round(Number(d.hints));

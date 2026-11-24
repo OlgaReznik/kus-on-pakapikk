@@ -146,3 +146,64 @@ export function drawMitten(ctx, mitten) {
     fillRoundRect(ctx, -6.2, -4.5, 12.4, 4.2, 1.5);
   }, MITTEN_SIZE_BOOST);
 }
+
+export function drawGingerbread(ctx, cookie) {
+  drawInObjectSpace(ctx, cookie, () => {
+    drawGroundShadow(ctx, 11, 2.8);
+    ctx.fillStyle = cookie.dough;
+    fillEllipse(ctx, -5, -4.5, 3.6, 4.5);
+    fillEllipse(ctx, 5, -4.5, 3.6, 4.5);
+    fillRoundRect(ctx, -7, -21, 14, 16, 5);
+    fillEllipse(ctx, -9.5, -17, 5, 3);
+    fillEllipse(ctx, 9.5, -17, 5, 3);
+    fillCircle(ctx, 0, -27, 7);
+
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    [-1, 1].forEach((side) => {
+      ctx.moveTo(side * 11.5, -19); ctx.lineTo(side * 12.5, -17); ctx.lineTo(side * 11.5, -15);
+      ctx.moveTo(side * 6.5, -3); ctx.lineTo(side * 4, -2); ctx.lineTo(side * 6.5, -1);
+    });
+    ctx.moveTo(-3, -24.5);
+    ctx.quadraticCurveTo(0, -22, 3, -24.5);
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    fillCircle(ctx, -2.5, -28.5, 1.1);
+    fillCircle(ctx, 2.5, -28.5, 1.1);
+    ctx.fillStyle = cookie.buttons;
+    [-15.5, -11.5, -7.5].forEach((y) => fillCircle(ctx, 0, y, 1.5));
+
+    if (cookie.bow) {
+      ctx.fillStyle = cookie.bow;
+      ctx.beginPath();
+      ctx.moveTo(0, -20); ctx.lineTo(-4.5, -22.5); ctx.lineTo(-4.5, -17.5); ctx.closePath();
+      ctx.moveTo(0, -20); ctx.lineTo(4.5, -22.5); ctx.lineTo(4.5, -17.5); ctx.closePath();
+      ctx.fill();
+      fillCircle(ctx, 0, -20, 1.3);
+    }
+  });
+}
+
+/** An elf hat lying in the snow. */
+export function drawLostHat(ctx, hat) {
+  drawInObjectSpace(ctx, hat, () => {
+    drawGroundShadow(ctx, 15, 3);
+    ctx.rotate(hat.rotation);
+    ctx.fillStyle = hat.color;
+    ctx.beginPath();
+    ctx.moveTo(-12, -1);
+    ctx.quadraticCurveTo(-11, -11, -1, -13);
+    ctx.quadraticCurveTo(9, -14, 17, -9);
+    ctx.quadraticCurveTo(8, -7, 0, -1);
+    ctx.closePath();
+    ctx.fill();
+    if (hat.trim) {
+      ctx.fillStyle = hat.trim;
+      fillRoundRect(ctx, -13.5, -4, 14, 4, 1.5);
+    }
+    ctx.fillStyle = hat.bell;
+    fillCircle(ctx, 17.5, -9, 2.6);
+  });
+}

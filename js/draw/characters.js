@@ -95,6 +95,39 @@ function drawScarf(ctx, scarf) {
   for (let j = 0; j < 3; j++) segment(2, -32 + j * 3.4, 4.6, 3.4, j + 1);
 }
 
+/** Green bars of the Nortal "N" mark (from Nortal.svg): [x, top, bottom] in a 32 × 44 box. */
+const NORTAL_BARS = [
+  [0.94, 1.9, 42.2], [4.69, 0, 44], [8.44, 1.9, 42.2], [12.19, 7.4, 29.5], [15.93, 11, 33],
+  [19.68, 14.7, 36.7], [23.43, 1.9, 42.2], [27.18, 0, 43.9], [30.92, 1.9, 42.2],
+];
+const NORTAL_GREEN = '#009639';
+
+/** Nortal "N" on the left side of the chest. */
+function drawNortalLogo(ctx) {
+  const size = 0.2;
+  ctx.save();
+  ctx.translate(-7.4, -30.5);
+  ctx.scale(size, size);
+  ctx.strokeStyle = NORTAL_GREEN;
+  ctx.lineWidth = 1.9;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  NORTAL_BARS.forEach(([x, top, bottom]) => {
+    ctx.moveTo(x, top + 1);
+    ctx.lineTo(x, bottom - 1);
+  });
+  ctx.stroke();
+  ctx.restore();
+}
+
+/** Laptop carried under the left arm. */
+function drawLaptop(ctx, color) {
+  ctx.fillStyle = color;
+  fillRoundRect(ctx, -18.5, -28, 5, 13.5, 1);
+  ctx.fillStyle = 'rgba(0, 0, 0, .25)';
+  ctx.fillRect(-14.4, -27.5, 0.9, 12.5);
+}
+
 function drawSantaBelt(ctx) {
   ctx.fillStyle = '#1e1e1e';
   ctx.fillRect(-10.6, -21, 21.2, 2.8);
@@ -177,6 +210,8 @@ export function drawPerson(ctx, person) {
     drawArms(ctx, person);
     drawHead(ctx, person);
     drawScarf(ctx, person.scarf);
+    if (person.nortalLogo) drawNortalLogo(ctx);
+    if (person.laptop) drawLaptop(ctx, person.laptop);
     if (person.belt) drawSantaBelt(ctx);
     if (person.beard) drawBeard(ctx, person.hair);
     HAT_DRAWERS[person.hatStyle](ctx, person);

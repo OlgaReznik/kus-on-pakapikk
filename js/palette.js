@@ -36,6 +36,12 @@ export const COLORS = {
   stallGoods: ['#c0392b', '#f1c40f', '#e67e22', '#8e44ad', '#27ae60'],
   skylineHouses: ['#273d5c', '#2f4a6d', '#34506f', '#3b2f4f', '#40324a'],
   fairyLights: ['#ff4d4d', '#ffd84d', '#4dc3ff', '#7dff8a', '#ff7de1'],
+  /** Dark blue coats – the Nortal employee wears one, so many passers-by do too. */
+  darkBlueCoats: ['#1b2a4a', '#2c3e50', '#0a3d62', '#34495e'],
+  laptops: ['#bdc3c7', '#7f8c8d', '#2c3e50', '#ecf0f1'],
+  gingerbread: ['#b5651d', '#a0522d', '#c27a3a'],
+  gingerBows: ['#d62828', '#27ae60', '#2980b9', '#f1c40f', '#8e44ad'],
+  gingerButtons: ['#d62828', '#ffffff', '#f1c40f', '#27ae60', '#2980b9'],
 };
 
 /** Signature colours of the hidden targets. Decoys are generated so they never match all of them. */
@@ -52,6 +58,12 @@ export const TARGET_COLORS = {
   redStar: '#e74c3c',
   lostMitten: '#2471c8',
   lostMittenCuff: '#ffffff',
+  gingerBow: '#d62828',
+  gingerButtons: '#27ae60',
+  lostHat: '#1f9d3a',
+  lostHatTrim: '#ffffff',
+  lostHatBell: '#f1c40f',
+  nortalCoat: '#1b2a4a',
 };
 
 export const SIGNS = {

@@ -3,7 +3,7 @@
 // The play area is divided into a grid. Buildings, targets and fillers each take grid cells,
 // and every object gets a little random jitter so the grid doesn't show.
 
-import { LEVELS, SCENE, TARGET } from '../config.js';
+import { LEVELS, SCENE, TARGET, TARGET_SIZE } from '../config.js';
 import { createSeededRandom } from '../utils/random.js';
 import { createBackground } from './background.js';
 import { getHitbox } from './hitbox.js';
@@ -131,7 +131,7 @@ function applyPerspective(rng, objects, level) {
   const { top, bottom } = SCENE.playArea;
   objects.forEach((object) => {
     const depthScale = 0.74 + (0.5 * (object.y - top)) / (bottom - top);
-    const variation = object.targetKey ? 1 : rng.range(0.93, 1.07);
+    const variation = object.targetKey ? (TARGET_SIZE[object.targetKey] ?? 1) : rng.range(0.93, 1.07);
     const boost = object.isBuilding ? BUILDING_SIZE_BOOST : 1;
     object.scale = depthScale * variation * level.objectScale * boost;
   });
